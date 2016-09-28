@@ -53,8 +53,7 @@ Systems::Systems(unsigned long systemsize, double J, double h, bool armadilloboo
     this->J = J;
     this->h = h;
     hs = vector<double>(no_of_states);
-    if(systemsize<6)    this->dense = dense;
-    else                this->dense = false;      // We will not compute with dense matrices if the system is too big
+    this->dense = dense;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
     randomize();
@@ -76,7 +75,9 @@ void Systems::change_system(double h)
     randomize();
     // Removing the diagonal entries in tripleList, as these contain the dependence of the h's
     if(dense==false)    for(unsigned int i=0; i<no_of_states; i++)        tripletList.pop_back();
-
+    // Because the diagonal part of the matrix is always set last.
+    // Using dense armadillo matrices, these are just overwritten.
+    // That may not be the case for dense matrices using Eigen.
 }
 
 void Systems::change_system(double h, double J)
@@ -88,9 +89,10 @@ void Systems::change_system(double h, double J)
     if(dense==false)
     {
         while(tripletList.empty()==false)     tripletList.pop_back();   // Resetting tripletList
+        // Maybe find a more effective way to do this? Just declare it again?
+        // Don't think I will actually use this function.
     }
 }
-
 
 void Systems::create_armadillo_matrix()
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
@@ -153,7 +155,6 @@ unsigned long Systems::flip_spin(unsigned long i, unsigned long a)      // This 
 }
 
 
-
 //--------------------------------------------SPIN OPERATORS----------------------------------------------//
 //-------------------------------------------------/Sz/---------------------------------------------------//
 
@@ -175,6 +176,7 @@ double Systems::szip1szi(unsigned long i, unsigned long a)
 
 
 //-------------------------------------------/S+ and S-/--------------------------------------------------//
+
 
 unsigned long Systems::upip1downi(unsigned long i, unsigned long a)
 {
@@ -234,11 +236,12 @@ void Systems::sector0()
 {
     if(systemsize%2==0)
     {
-        mysector = no_of_states/2;
+        mysector = systemsize/2;
 
-        if(dense==true)        find_sector_dense();
+        if(dense==true)        find_sector_dense();  // Change these commands.
         else                   find_sector_sparse();
     }
+    else    cout << "A system of 3 particles have no S_tot = 0 states. Try another sector." << endl;
 }
 
 //Something is rotten in the state of sectors.
@@ -247,7 +250,6 @@ void Systems::find_sector_sparse()
     //unsigned long number = 0;
     sectorbool = true;
     number_of_hits = 0;
-    unsigned long no_of_states = pow(2, systemsize);
     sectorlist = vector<unsigned long int>(no_of_states);
     for(unsigned long state=0; state<no_of_states; state++)
     {
@@ -260,12 +262,11 @@ void Systems::find_sector_sparse()
 }
 
 void Systems::find_sector_dense()
-{    // Should append to some list in some way... Armadillo? Eigen? Eigen.
-    //unsigned long number = 0;
+{   // Should keep some information on what states are in the list. Well, that is all in sectorlist.
+    // And that is not destroyed. Retrieve it in main, perhaps.
     sectorbool = true;
     number_of_hits = 0;
-    unsigned long no_of_states = pow(2, systemsize);
-    sectorlist = vector<unsigned long int>(no_of_states);
+    sectorlist = vector<unsigned long>(no_of_states);
     for(unsigned long state=0; state<no_of_states; state++)
     {
         if(number_of_up(state)==mysector)
@@ -273,9 +274,8 @@ void Systems::find_sector_dense()
             sectorlist[number_of_hits] = state;
             cout << "sectorlist[number_of_hits] = " << sectorlist[number_of_hits] << endl;
             number_of_hits ++;
-
         } // End if
-    } // End while
+    } // End for
     if(number_of_hits > 0)                   trim_sectorlist();
     else
     {
@@ -332,9 +332,21 @@ void Systems::set_elements(unsigned long i, unsigned long b)
 
 void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
 {
-    unsigned long index1 = no_of_states - (b+1);
+    unsigned long index1 = 0;
+    unsigned long index2 = 0;
+    if(sectorbool==false)
+    {
+        index1 = no_of_states - (b+1);
+        index2 = no_of_states - (i+1);
+    }
+    else
+    {   // Must correct this later. Do not want an upside-down matrix. Or? Not a big problem if I retrieve
+        // sectorlist. That holds for all systems with the same no. of. particles.
+        index1 = i;
+        index2 = b;
+        // Blimey. This redistribution of states is trickier than I thought.
+    }
 
-    unsigned long index2 = no_of_states - (i+1);
 
     double element = 0;
     if(systemsize == 2)        element = J;  // Special case. BCs and small
@@ -368,7 +380,6 @@ void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
 
 void Systems::palhuse_interacting_sectorHamiltonian_dense()
 {
-
     if(armadillobool == true)    create_armadillo_matrix(number_of_hits);
     //else                         create_dense_Eigen_matrix(number_of_hits);
 
@@ -385,12 +396,18 @@ void Systems::palhuse_interacting_sectorHamiltonian_dense()
             if(testupip1downi==true)
             {
                 b = upip1downi(j, a);
-                set_elements(a, b);
+                for(unsigned long k = 0; k<number_of_hits; k++)
+                {
+                    if(b==sectorlist[k])  set_elements(i, k);
+                }
             }
             if(testdownip1upi==true)
             {
                 b = downip1upi(j, a);
-                set_elements(a, b);
+                for(unsigned long k = 0; k<number_of_hits; k++)
+                {
+                    if(b==sectorlist[k])  set_elements(i, k);
+                }
             }
         } // End s+_{i+1}s-_{i} part
     } // End for j
@@ -434,20 +451,19 @@ void Systems::palhuse_interacting_sectorHamiltonian_sparse()
 void Systems::palhuse_diagonal_sectorHamiltonian()
 {
     // Do something like index = no_of_states - i that works for this one.
-    unsigned long index = 0;
+    // For now, the matrix is upside down, but we have gotten a list of its entries: sectorlist.
     double element = 0;
     for(unsigned long i=0; i<number_of_hits; i++)
     {
-        index = number_of_hits - 1; // This should flip the Hamiltonian, I guess. Should look into it.
         element = 0;
         unsigned long a = sectorlist[i];
         for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
         if(dense==false)
         {
-            currentTriplet = T(index,index,element);
+            currentTriplet = T(i,i,element);
             tripletList.push_back(currentTriplet);
         }
-        if((dense==true) && (armadillobool == true))    armaH(index,index) = element;
+        if((dense==true) && (armadillobool == true))    armaH(i,i) = element;
         //if((dense==true) && (armadillobool == false))   eigenH(i,i) = element;
     } // End for-loop over i
 } // End function palhuse_random_sectorHamiltonian_dense
@@ -511,7 +527,3 @@ void Systems::palhuse_diagonal_totalHamiltonian()
     if(dense==false)             sparseH.setFromTriplets(tripletList.begin(), tripletList.end());
     //if((dense==true) && (armadillobool==false))    eigenH.cast<double>();
 } // End function palhuse_random_sectorHamiltonian_dense
-
-
-
-
