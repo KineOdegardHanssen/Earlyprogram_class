@@ -332,14 +332,18 @@ void Systems::set_elements(unsigned long i, unsigned long b)
 
 void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
 {
+    unsigned long index1 = no_of_states - (b+1);
+
+    unsigned long index2 = no_of_states - (i+1);
+
     double element = 0;
     if(systemsize == 2)        element = J;  // Special case. BCs and small
     else                       element = 0.5*J;
 
     if(dense==false)
     {
-        if(systemsize == 2)             currentTriplet = T(b,i,0.5*element); // ... ?
-        else                            currentTriplet = T(b,i,element);
+        if(systemsize == 2)             currentTriplet = T(index1,index2,0.5*element); // ... ?
+        else                            currentTriplet = T(index1,index2,element);
         tripletList.push_back(currentTriplet);
     }
 
@@ -347,9 +351,8 @@ void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
     {
         if(armadillobool == true)
         {
-            armaH(b,i) = element;
-            armaH(i,b) = element;
-            cout << "armaH(b,i) " << armaH(b,i) << endl;
+            armaH(index1,index2) = element;
+            armaH(index2,index1) = element;
         }  // End if-test dense
         /*
         else   // Maybe set a Eigenbool sometime also?
@@ -397,6 +400,7 @@ void Systems::palhuse_interacting_sectorHamiltonian_dense()
 
 void Systems::palhuse_interacting_sectorHamiltonian_sparse()
 {
+    // The Hamiltonian is hermittian, i.e. symmetric about the diagonal, so we need not change the indices.
     unsigned long length = number_of_hits << 3;
 
     currentTriplet = T(0,0,0);
@@ -429,18 +433,21 @@ void Systems::palhuse_interacting_sectorHamiltonian_sparse()
 
 void Systems::palhuse_diagonal_sectorHamiltonian()
 {
+    // Do something like index = no_of_states - i that works for this one.
+    unsigned long index = 0;
     double element = 0;
     for(unsigned long i=0; i<number_of_hits; i++)
     {
+        index = number_of_hits - 1; // This should flip the Hamiltonian, I guess. Should look into it.
         element = 0;
         unsigned long a = sectorlist[i];
         for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
         if(dense==false)
         {
-            currentTriplet = T(i,i,element);
+            currentTriplet = T(index,index,element);
             tripletList.push_back(currentTriplet);
         }
-        if((dense==true) && (armadillobool == true))    armaH(i,i) = element;
+        if((dense==true) && (armadillobool == true))    armaH(index,index) = element;
         //if((dense==true) && (armadillobool == false))   eigenH(i,i) = element;
     } // End for-loop over i
 } // End function palhuse_random_sectorHamiltonian_dense
@@ -458,11 +465,9 @@ void Systems::palhuse_interacting_totalHamiltonian()
     //else               create_dense_Eigen_matrix();
     sectorbool=false;
 
-    int usual = 0;
     unsigned long b = 0;
     for(unsigned long i=0; i<no_of_states; i++)
     {   // i is our state
-       usual = 0;
         for(unsigned long j=0; j<systemsize; j++)
         {
             checktestupdown(j,i);
@@ -478,7 +483,6 @@ void Systems::palhuse_interacting_totalHamiltonian()
             }
 
         } // End for j
-        usual++;
     } // End for i
 } // End function
 
@@ -486,23 +490,23 @@ void Systems::palhuse_interacting_totalHamiltonian()
 
 void Systems::palhuse_diagonal_totalHamiltonian()
 {
+    unsigned long index = 0;
     double element = 0;
-    int usual = 0;
     for(unsigned long i=0; i<no_of_states; i++)
     {
         element = 0;
         // The 2-particle case is special again...
         for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, i) + J*szip1szi(j,i);
-        currentTriplet = T(i,i,element);
+        index = no_of_states - (i+1);
+        currentTriplet = T(index,index,element);
         tripletList.push_back(currentTriplet);
 
-        if((dense==true) && (armadillobool==true))    armaH(i,i) = element;
+        if((dense==true) && (armadillobool==true))    armaH(index,index) = element;
         //if((dense==true) && (armadillobool==false))   eigenH(usual,usual) = element;
         if(dense==false)
         {
             sparseH = Eigen::SparseMatrix<double>(no_of_states, no_of_states);
         }
-        usual++;
     } // End for-loop over i
     if(dense==false)             sparseH.setFromTriplets(tripletList.begin(), tripletList.end());
     //if((dense==true) && (armadillobool==false))    eigenH.cast<double>();
