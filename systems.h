@@ -67,12 +67,14 @@ public:
     unsigned long number_of_down(unsigned long a);
     void checktestupdown(unsigned long j, unsigned long i);
     void sector0();
+    void sector1_2();          // Odd name, perhaps...
     void find_sector_sparse();
     void find_sector_dense();
     void trim_sectorlist();
 
     //The systems
     void randomize();
+    void set_hs(vector<double> hs_in);
     void set_hs_hom();
     void set_hs_alt();
 

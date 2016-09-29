@@ -7,10 +7,11 @@ using namespace std;
 
 void system_total_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
 void system_sector0_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
+void system_sector1_2_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
 
 int main()
 {       
-    unsigned long systemsize = 2;
+    unsigned long systemsize = 4;
     double J = 1;
     double h = 1;
     bool armabool = true;
@@ -18,6 +19,7 @@ int main()
 
     //system_total_hom(systemsize, h, J, armabool, densebool);
     system_sector0_hom(systemsize, h, J, armabool, densebool);
+    //system_sector1_2_hom(systemsize, h, J, armabool, densebool);
 
     /*
     unsigned long number_of_hits = 0;
@@ -82,7 +84,7 @@ void system_total_hom(unsigned long systemsize, double h, double J, bool armaboo
 
     Diagonalization giveit = Diagonalization(testsystem);
     giveit.using_armadillo();
-    giveit.print_using_armadillo();
+    //giveit.print_using_armadillo();
 }
 
 
@@ -91,13 +93,20 @@ void system_sector0_hom(unsigned long systemsize, double h, double J, bool armab
     Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
 
 
-    testsystem.set_hs_hom();
+    vector<double> hs_in = vector<double>(systemsize);
+    hs_in[0] = 0.1;
+    hs_in[1] = 4;
+    hs_in[2] = 7;
+    hs_in[3] = 0.35;
+    testsystem.set_hs(hs_in);
+    //testsystem.set_hs_hom();
     testsystem.sector0();
     if(densebool==true)     testsystem.palhuse_interacting_sectorHamiltonian_dense();
     // Maybe I should just drop palhuse_interacting_sectorHamiltonian_sparse()
     testsystem.palhuse_diagonal_sectorHamiltonian();
 
 
+    // /*
     for(unsigned long i=0; i<testsystem.number_of_hits; i++)
     {
         for(unsigned long j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
@@ -107,5 +116,28 @@ void system_sector0_hom(unsigned long systemsize, double h, double J, bool armab
     Diagonalization giveit = Diagonalization(testsystem);
     giveit.using_armadillo();
     giveit.print_using_armadillo();
+    // */
+}
 
+void system_sector1_2_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool)
+{
+    Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
+
+    testsystem.set_hs_hom();
+    testsystem.sector1_2();
+    if(densebool==true)     testsystem.palhuse_interacting_sectorHamiltonian_dense();
+    // Maybe I should just drop palhuse_interacting_sectorHamiltonian_sparse()
+    testsystem.palhuse_diagonal_sectorHamiltonian();
+
+    // /*
+    for(unsigned long i=0; i<testsystem.number_of_hits; i++)
+    {
+        for(unsigned long j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
+        cout << endl;
+    }
+
+    Diagonalization giveit = Diagonalization(testsystem);
+    giveit.using_armadillo();
+    giveit.print_using_armadillo();
+    // */
 }

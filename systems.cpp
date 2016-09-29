@@ -171,6 +171,7 @@ double Systems::szip1szi(unsigned long i, unsigned long a)
     double secondspin = 0;
     if(i==(systemsize-1))    secondspin = szi(0,a);
     else                     secondspin = szi((i+1),a);
+    cout << "a = " << a << "; j = " << i <<"; First spin = " << firstspin << "; Second spin = " << secondspin << "; Returned: " << firstspin*secondspin << endl;
     return firstspin*secondspin;
 }
 
@@ -241,7 +242,19 @@ void Systems::sector0()
         if(dense==true)        find_sector_dense();  // Change these commands.
         else                   find_sector_sparse();
     }
-    else    cout << "A system of 3 particles have no S_tot = 0 states. Try another sector." << endl;
+    else    cout << "A system of an odd no. of particles have no S_tot = 0 states. Try another sector." << endl;
+}
+
+void Systems::sector1_2()
+{   // System with one more spin up than spin down. This is really sector1_2.
+    if(systemsize%2==1)
+    {
+        mysector = (systemsize+1)/2;
+
+        if(dense==true)        find_sector_dense();  // Change these commands.
+        else                   find_sector_sparse();
+    }
+    else    cout << "A system of an even no. of particles have no S_tot = 1/2 states. Try another sector." << endl;
 }
 
 //Something is rotten in the state of sectors.
@@ -305,6 +318,11 @@ void Systems::randomize()
         hs[i] = distribution(generator);   // This should do it
     } // End for-loop
 }  // End function randomize
+
+void Systems::set_hs(vector<double> hs_in)
+{   // This function may be useful for testing. NB: Must make sure len(hs_in) = no_of_states.
+    for(int i=0; i<no_of_states; i++)        hs[i] = hs_in[i];
+}
 
 void Systems::set_hs_hom()
 {
@@ -458,6 +476,7 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
         element = 0;
         unsigned long a = sectorlist[i];
         for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
+        if(element==0)      cout << "Weird stuff happened! Diagonal entry=0! i = " << i << endl;
         if(dense==false)
         {
             currentTriplet = T(i,i,element);
