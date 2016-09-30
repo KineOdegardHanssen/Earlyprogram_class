@@ -171,7 +171,6 @@ double Systems::szip1szi(unsigned long i, unsigned long a)
     double secondspin = 0;
     if(i==(systemsize-1))    secondspin = szi(0,a);
     else                     secondspin = szi((i+1),a);
-    cout << "a = " << a << "; j = " << i <<"; First spin = " << firstspin << "; Second spin = " << secondspin << "; Returned: " << firstspin*secondspin << endl;
     return firstspin*secondspin;
 }
 
@@ -183,8 +182,8 @@ unsigned long Systems::upip1downi(unsigned long i, unsigned long a)
 {
     unsigned long a2 = 0;
     if(i==(systemsize-1))            a2 = set_spin_up(0, a);         // Periodic boundary conditions
-    if(i<(systemsize-1))             a2 = set_spin_up((i+1), a);     //
-    if(i>(systemsize-1))             cout << "Check your indices, woman!!" << endl;
+    else if(i<(systemsize-1))        a2 = set_spin_up((i+1), a);     //
+    else                             cout << "Check your indices, woman!!" << endl;
     return set_spin_down(i, a2);
 }
 
@@ -192,8 +191,8 @@ unsigned long Systems::downip1upi(unsigned long i, unsigned long a)
 {
     unsigned long a2 = 0;
     if(i==(systemsize-1))            a2 = set_spin_down(0, a);       // Periodic boundary conditions
-    if(i<(systemsize-1))             a2 = set_spin_down((i+1), a);
-    if(i>(systemsize-1))             cout << "Check your indices, woman!!" << endl;
+    else if(i<(systemsize-1))        a2 = set_spin_down((i+1), a);
+    else                             cout << "Check your indices, woman!!" << endl;
     return set_spin_up(i, a2);
 }
 
@@ -285,7 +284,6 @@ void Systems::find_sector_dense()
         if(number_of_up(state)==mysector)
         {
             sectorlist[number_of_hits] = state;
-            cout << "sectorlist[number_of_hits] = " << sectorlist[number_of_hits] << endl;
             number_of_hits ++;
         } // End if
     } // End for
@@ -376,8 +374,7 @@ void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
         else                            currentTriplet = T(index1,index2,element);
         tripletList.push_back(currentTriplet);
     }
-
-    if(dense==true)
+    else
     {
         if(armadillobool == true)
         {
@@ -476,13 +473,12 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
         element = 0;
         unsigned long a = sectorlist[i];
         for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
-        if(element==0)      cout << "Weird stuff happened! Diagonal entry=0! i = " << i << endl;
         if(dense==false)
         {
             currentTriplet = T(i,i,element);
             tripletList.push_back(currentTriplet);
         }
-        if((dense==true) && (armadillobool == true))    armaH(i,i) = element;
+        else if((dense==true) && (armadillobool == true))    armaH(i,i) = element;
         //if((dense==true) && (armadillobool == false))   eigenH(i,i) = element;
     } // End for-loop over i
 } // End function palhuse_random_sectorHamiltonian_dense
@@ -538,7 +534,7 @@ void Systems::palhuse_diagonal_totalHamiltonian()
 
         if((dense==true) && (armadillobool==true))    armaH(index,index) = element;
         //if((dense==true) && (armadillobool==false))   eigenH(usual,usual) = element;
-        if(dense==false)
+        else if(dense==false)
         {
             sparseH = Eigen::SparseMatrix<double>(no_of_states, no_of_states);
         }

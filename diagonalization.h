@@ -7,6 +7,9 @@
 #include <Eigen/Sparse>
 #include <Eigen/QR>
 #include <Eigen/Eigenvalues>
+#include<vector>
+#include<complex>
+
 
 using namespace std;
 //using namespace arma;
@@ -17,8 +20,16 @@ public:
 
     Systems given;
 
+    // For linking directly to LAPACK
+    char JOBS;
+    char UPLO;  // upper triangular matrix is stored after diag.
+    int N;      // size of matrix
+    int LDA;
+
+
     // For armadillo solvers
     unsigned long arma_n, eigen_n;
+    double armatime, lapacktime;
     arma::vec eigenvalues_armadillo; // Should I use arma::vec? Probably a good idea. Eigen probably has something similar
     arma::mat eigenvectors_armadillo;
 
@@ -31,6 +42,10 @@ public:
     Diagonalization();
     Diagonalization(Systems given);
 
+
+
+    // Functions for using LAPACK
+    void lapack_directly();
 
     // Functions for armadillo matrices (dense)
     void using_armadillo();

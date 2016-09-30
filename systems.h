@@ -35,7 +35,7 @@ public:
     vector< Eigen::Triplet<double> > tripletList; // Fetched this from the Eigen website
     Eigen::SparseMatrix<double> sparseH;          // Or get this from systems?
 
-    //Eigen::MatrixXd eigenH;
+    Eigen::MatrixXd eigenH;
 
     // Initializer
     Systems();
@@ -47,8 +47,8 @@ public:
     void change_system(double h, double J);
     void create_armadillo_matrix();
     void create_armadillo_matrix(unsigned long size);     // This is intended if we consider sectors
-    //void create_dense_Eigen_matrix();
-    //void create_dense_Eigen_matrix(unsigned long size);
+    void create_dense_Eigen_matrix();
+    void create_dense_Eigen_matrix(unsigned long size);
 
     // Basic spin operations
     unsigned long give_spin(unsigned long i, unsigned long a);
