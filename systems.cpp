@@ -9,23 +9,6 @@
 #include <Eigen/QR>
 #include <Eigen/Eigenvalues>
 
-/* Use
-
-SparseMatrix<double> sm1(1000,1000);
-SparseMatrix<std::complex<double>,RowMajor> sm2;
-
-
-std::vector< Eigen::Triplet<double> > tripletList;
-tripletList.reserve(estimation_of_entries);
-// -- Fill tripletList with nonzero elements...
-sm1.setFromTriplets(TripletList.begin(), TripletList.end());
-
-...Bruke push_back ...?
-
-make_compress ...
-*/
-
-// Find some way to reset tripleList or removing the last values.
 
 using namespace std;
 
@@ -57,6 +40,8 @@ Systems::Systems(unsigned long systemsize, double J, double h, bool armadilloboo
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
     randomize();
+
+    cout << "In Systems. armadillobool = " << armadillobool << endl;
 }
 
 
@@ -101,6 +86,7 @@ void Systems::create_armadillo_matrix()
     {
         for(unsigned long j=0; j<no_of_states; j++)    armaH(i,j)= 0.0;
     }
+    cout << "Arma matrix set. Max index no = " << no_of_states-1 << endl;
 }
 
 void Systems::create_armadillo_matrix(unsigned long size)
@@ -110,9 +96,10 @@ void Systems::create_armadillo_matrix(unsigned long size)
     {
         for(unsigned long j=0; j<size; j++)    armaH(i,j)= 0.0;
     }
+    cout << "Arma matrix set. Max index no = " << size-1 << endl;
 }
 
-/*
+
 void Systems::create_dense_Eigen_matrix()
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
     eigenH = Eigen::MatrixXd(no_of_states, no_of_states);
@@ -120,6 +107,7 @@ void Systems::create_dense_Eigen_matrix()
     {
         for(unsigned long j=0; j<no_of_states; j++)    eigenH(i,j)= 0.0;
     }
+    cout << "Eigen matrix set. Max index no. = " << no_of_states-1 << endl;
 }
 
 void Systems::create_dense_Eigen_matrix(unsigned long size)
@@ -129,8 +117,31 @@ void Systems::create_dense_Eigen_matrix(unsigned long size)
     {
         for(unsigned long j=0; j<size; j++)    eigenH(i,j)= 0.0;
     }
+    cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
 }
-*/
+
+void Systems::create_complex_Eigen_matrix()
+{
+    complexH = Eigen::MatrixXcd(no_of_states, no_of_states);
+    complex<double> complexelem = 0.0;
+    for(unsigned long i=0; i<no_of_states; i++)
+    {
+        for(unsigned long j=0; j<no_of_states; j++)    complexH(i,j)= complexelem;
+    }
+}
+
+void Systems::create_complex_Eigen_matrix(unsigned long size)
+{
+    complexH = Eigen::MatrixXcd(size, size);
+    complex<double> complexelem = 0.0;
+    for(unsigned long i=0; i<size; i++)
+    {
+        for(unsigned long j=0; j<size; j++)    complexH(i,j)= complexelem;
+    }
+}
+
+
+
 
 //---------------------------------------BASIC SPIN OPERATIONS--------------------------------------------//
 
@@ -319,7 +330,7 @@ void Systems::randomize()
 
 void Systems::set_hs(vector<double> hs_in)
 {   // This function may be useful for testing. NB: Must make sure len(hs_in) = no_of_states.
-    for(int i=0; i<no_of_states; i++)        hs[i] = hs_in[i];
+    for(unsigned int i=0; i<no_of_states; i++)        hs[i] = hs_in[i];
 }
 
 void Systems::set_hs_hom()
@@ -381,22 +392,29 @@ void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
             armaH(index1,index2) = element;
             armaH(index2,index1) = element;
         }  // End if-test dense
-        /*
         else   // Maybe set a Eigenbool sometime also?
         {  // Check if this returns the correct result
-            int b_int = b & INT_MAX;
-            int i_int = i & INT_MAX;
-            eigenH(b_int,i_int) = element;
-            eigenH(i_int,b_int) = element;
-        }*/
+            eigenH(index1, index2) = element;
+            eigenH(index2, index1) = element;
+        }
+    }
+
+    if(ctbool==true)
+    {   // Or could I just recast?
+        double c_element = 0;
+        if(systemsize == 2)        c_element = J;  // Special case. BCs and small
+        else                       c_element = 0.5*J;
+        complexH(index1, index2) = c_element;
+        complexH(index2, index1) = c_element;
     }
 }
 //----------------------------------------SECTOR HAMILTONIANS---------------------------------------------//
 
 void Systems::palhuse_interacting_sectorHamiltonian_dense()
 {
-    if(armadillobool == true)    create_armadillo_matrix(number_of_hits);
-    //else                         create_dense_Eigen_matrix(number_of_hits);
+    if(armadillobool == true)                   create_armadillo_matrix(number_of_hits);
+    if(armadillobool==true && ctbool==false)    create_dense_Eigen_matrix(number_of_hits);
+    else                                        create_complex_Eigen_matrix(number_of_hits);
 
     unsigned long a = 0;
     unsigned long b = 0;
@@ -478,8 +496,13 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
             currentTriplet = T(i,i,element);
             tripletList.push_back(currentTriplet);
         }
-        else if((dense==true) && (armadillobool == true))    armaH(i,i) = element;
-        //if((dense==true) && (armadillobool == false))   eigenH(i,i) = element;
+        else if((dense==true) && (armadillobool == true))                       armaH(i,i) = element;
+        else if((dense==true) && (armadillobool == false) && (ctbool==false))   eigenH(i,i) = element;
+        else if((dense==true) && (armadillobool == false) && (ctbool==true))
+        {
+            complex<double> c_element = element+ 0*i;
+            complexH(i,i) = c_element;
+        }
     } // End for-loop over i
 } // End function palhuse_random_sectorHamiltonian_dense
 
@@ -492,8 +515,9 @@ void Systems::palhuse_interacting_totalHamiltonian()
     currentTriplet = T(0,0,0);
     tripletList.reserve(length);     // Is this too big?
 
-    if(dense==true)    create_armadillo_matrix();
-    //else               create_dense_Eigen_matrix();
+    if(armadillobool==true)                                        create_armadillo_matrix();
+    if(armadillobool==true && ctbool==false)                       create_dense_Eigen_matrix();
+    else                                                           create_complex_Eigen_matrix();
     sectorbool=false;
 
     unsigned long b = 0;
@@ -512,7 +536,6 @@ void Systems::palhuse_interacting_totalHamiltonian()
                 b = downip1upi(j, i);
                 set_elements(i,b);
             }
-
         } // End for j
     } // End for i
 } // End function
@@ -532,13 +555,18 @@ void Systems::palhuse_diagonal_totalHamiltonian()
         currentTriplet = T(index,index,element);
         tripletList.push_back(currentTriplet);
 
-        if((dense==true) && (armadillobool==true))    armaH(index,index) = element;
-        //if((dense==true) && (armadillobool==false))   eigenH(usual,usual) = element;
+        if((dense==true) && (armadillobool==true))                            armaH(index,index) = element;
+        else if((dense==true) && (armadillobool==false) && (ctbool==false))   eigenH(index,index) = element;
+        else if((dense==true) && (armadillobool==false) && (ctbool==true))
+        {
+            complex<double> c_element = element + 0*i;
+            complexH(index,index) = c_element;
+        }
         else if(dense==false)
         {
             sparseH = Eigen::SparseMatrix<double>(no_of_states, no_of_states);
         }
     } // End for-loop over i
     if(dense==false)             sparseH.setFromTriplets(tripletList.begin(), tripletList.end());
-    //if((dense==true) && (armadillobool==false))    eigenH.cast<double>();
+    if((dense==true) && (armadillobool==false))    eigenH.cast<double>();
 } // End function palhuse_random_sectorHamiltonian_dense

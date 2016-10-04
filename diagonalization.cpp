@@ -19,7 +19,15 @@ void Diagonalization::lapack_directly()
     else                       N = given.no_of_states;
     */
     double start_time_lapack_directly = clock();
-    arma::mat A = given.armaH;
+
+    // Tried to go complex. Didn't work.
+    /*
+    arma::mat complexpart = arma::zeros(N,N);       // The complex part is zero.
+    arma::mat C  = arma::mat(N,N);
+    C(0,1) = 1.1;
+    C(1,1) = 1.4;
+    arma::cx_mat A = arma::cx_mat(B, C);  // Not correct, just going to see if it will run
+    */
 
     // I just use lapacke.h
     /*
@@ -27,11 +35,15 @@ void Diagonalization::lapack_directly()
 
     #ifdef LAPACKE   // Can I put this somewhere that is a bit more sensible?
     {
+    */
+
     #define LAPACK_DISABLE_NAN_CHECK
     #define LAPACK_COMPLEX_CUSTOM
     #define lapack_complex_float std::complex<float>
-    #define lapack_complex_double std::complex<double>
+    #define __complex__double std::complex<double>
+    /*
     #include<lapacke.h>
+
     }
     #else
     {
@@ -63,14 +75,14 @@ void Diagonalization::lapack_directly()
     #endif
     */
 
-    LAPACKE_zheev_work(LAPACK_COL_MAJOR, JOBS, UPLO, N, &A[0],LDA, &W[0],&WORK[0],LWORK,&RWORK[0]);
+    LAPACKE_zheev_work(LAPACK_COL_MAJOR, JOBS, UPLO, N, &given.complexH(0),LDA, &W[0],&WORK[0],LWORK,&RWORK[0]);
 
     double end_time_lapack_directly = clock();
 
     lapacktime = (end_time_lapack_directly - start_time_lapack_directly)/CLOCKS_PER_SEC;
 
 
-    cout << &A << endl;
+    //cout << &A << endl;
 
     /*
     for(int i=0; i<N; i++)
@@ -116,17 +128,14 @@ void Diagonalization::print_sparse_Eigen()
 }
 
 
-/*
+// Here is the danger zone!
+
 void Diagonalization::using_dense_eigen()
 {
-    arma_n = 0;
-    if(given.sectorbool==true)          arma_n = given.number_of_hits;
-    else                                arma_n = given.no_of_states;
+    Eigen::EigenSolver<Eigen::MatrixXd> es(given.eigenH);  // Why won't this work?
 
-    Eigen::EigenSolver<Eigen::MatrixXd> es(given.eigenH.cast<double>);
-
-    Eigen::VectorXd eigenvalues_H = es.eigenvalues();
-    Eigen::MatrixXd eigenmatrix_H = es.eigenvectors();
+    //Eigen::VectorXd eigenvalues_H = es.eigenvalues();
+    //Eigen::MatrixXd eigenmatrix_H = es.eigenvectors();
 
 }
 
@@ -137,7 +146,6 @@ void Diagonalization::print_dense_using_eigen()
     cout << "The eigenvalues of H are:" << endl << es.eigenvalues() << endl;
     cout << "The matrix of eigenvectors, V, is:" << endl << es.eigenvectors() << endl << endl;
 }
-*/
 
 
 
