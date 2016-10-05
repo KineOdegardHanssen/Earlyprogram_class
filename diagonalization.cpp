@@ -40,7 +40,7 @@ void Diagonalization::lapack_directly()
     #define LAPACK_DISABLE_NAN_CHECK
     #define LAPACK_COMPLEX_CUSTOM
     #define lapack_complex_float std::complex<float>
-    #define __complex__double std::complex<double>
+    #define lapack_complex_double std::complex<double>
     /*
     #include<lapacke.h>
 
@@ -62,7 +62,8 @@ void Diagonalization::lapack_directly()
     UPLO = 'U';
     LDA  = 'N';
     int LWORK = 2*N-1;
-    std::vector<double> WORK  = std::vector<double> (LWORK);// What filetype is this?
+    //int INFO = 0;
+    std::vector<double> WORK  = std::vector<double> (LWORK); // What filetype is this?
     std::vector<double> RWORK = std::vector<double>(3*N-2);
     std::vector<double> W     = std::vector<double>(N);
 
@@ -75,7 +76,15 @@ void Diagonalization::lapack_directly()
     #endif
     */
 
-    LAPACKE_zheev_work(LAPACK_COL_MAJOR, JOBS, UPLO, N, &given.complexH(0),LDA, &W[0],&WORK[0],LWORK,&RWORK[0]);
+    //complex<double> *A1 = given.complexH.data();
+
+    double *A1 = given.eigenH.data();
+
+    // dsyev (JOBZ, UPLO, N, A, LDA, W, WORK, LWORK, INFO)
+
+    //LAPACKE_zheev_work(LAPACK_COL_MAJOR, JOBS, UPLO, N, A1, LDA, &W[0],&WORK[0],LWORK,&RWORK[0]);
+
+    LAPACKE_dsyev_work(LAPACK_COL_MAJOR, JOBS, UPLO, N, A1, LDA, &W[0],&WORK[0],LWORK);
 
     double end_time_lapack_directly = clock();
 
