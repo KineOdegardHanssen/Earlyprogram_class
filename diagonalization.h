@@ -28,7 +28,6 @@ public:
 
 
     // For armadillo solvers
-    unsigned long arma_n, eigen_n;
     double armatime, lapacktime;
     arma::vec eigenvalues_armadillo; // Should I use arma::vec? Probably a good idea. Eigen probably has something similar
     arma::mat eigenvectors_armadillo;
@@ -36,6 +35,9 @@ public:
     // For Eigen using dense matrices
     Eigen::VectorXd eigenvalues_H;      // Not using these (yet...)
     Eigen::MatrixXd eigenmatrix_H;
+
+    //Eigen::Map<Eigen::VectorXd> eigenvalues_H;
+    //Eigen::Map<Eigen::MatrixXd> eigenmatrix_H;
 
 
     //Initializers

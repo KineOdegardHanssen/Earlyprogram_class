@@ -149,7 +149,7 @@ void Diagonalization::lapack_directly()
             cout << "an error occured : "<< INFO << endl << endl;
             lapacktime = 1e16;
         }else{
-            cout << "Eigenvectors: ";
+            cout << "Eigenvectors: " << endl;
             for (int i=0;i<N;i++)
             {
                 cout << "[" << endl;
@@ -167,19 +167,37 @@ void Diagonalization::lapack_directly()
         }
     }
 
-    cout << "After using Eigen::Map: " << endl;
-    Eigen::MatrixXd B = Eigen::Map<Eigen::Matrix<double, N, N> > (A);
-    //Eigen::MatrixXd B = Eigen::Map<Eigen::Matrix<double, N, N> > (A);
-    //Eigen::MatrixXd B = Eigen::Map<Eigen::MatrixXd(N,N) > (A); // The dimensions ...
+    // Setting things manually because it is a big noisy mess otherwise
+    // Okay, time both...
+    eigenmatrix_H = Eigen::MatrixXd(N,N);
+    eigenvalues_H = Eigen::VectorXd(N);
 
-    for(int i=0; i<N; i++)
+    for (int i=0;i<N;i++)
     {
-        for(int j=0; j<N; j++)    cout << B(i,j) << " ";
-        cout << endl;
+        for(int j=0; j<N; j++)            eigenmatrix_H(i,j) = A[i+j*LDA];
     }
 
+    for(int k=0; k<N; k++)                eigenvalues_H(k) = W[k];
 
 
+    cout << "Manually: " << endl;
+    cout << "Eigenmatrix: " << endl;
+    cout << eigenmatrix_H << endl;
+
+    cout << "Eigenvalues" << endl;
+    cout << eigenvalues_H << endl;
+
+
+    cout << "After using Eigen::Map: " << endl;
+    Eigen::Map<Eigen::MatrixXd> B(A, N, N);
+    //Eigen::Map<Eigen::VectorXd> evs(W);
+
+    //eigenvalues_H = evs;
+    //eigenmatrix_H = B;
+
+    //eigenmatrix_H(A, N, N);
+
+    cout << B << endl;
 
     if(TRACE)    cout << "Everything should be running just fine" << endl;
 
@@ -191,11 +209,11 @@ void Diagonalization::lapack_directly()
 void Diagonalization::using_armadillo()
 {
     double start_time_arma = clock();        // If I want to take the time
-    arma_n = 0;
-    if(given.sectorbool==true)          arma_n = given.number_of_hits;
-    else                                arma_n = given.no_of_states;
-    eigenvalues_armadillo = arma::vec(arma_n);
-    eigenvectors_armadillo = arma::mat(arma_n,arma_n);
+    N = 0;
+    if(given.sectorbool==true)          N = given.number_of_hits; // Should do something so that this if-test is not neccessary
+    else                                N = given.no_of_states;
+    eigenvalues_armadillo = arma::vec(N);
+    eigenvectors_armadillo = arma::mat(N,N);
 
     //string method = "std";
     arma::eig_sym(eigenvalues_armadillo,eigenvectors_armadillo, given.armaH);
@@ -205,11 +223,11 @@ void Diagonalization::using_armadillo()
 
 void Diagonalization::print_using_armadillo()
 {
-    for(int i= 0; i<arma_n; i++)
+    for(int i= 0; i<N; i++)
     {
         cout << "Eigenvalue = " << eigenvalues_armadillo(i) << endl;
         cout << "Its corresponding eigenvector:" << endl;
-        for(int j=0; j<arma_n; j++)       cout << eigenvectors_armadillo(j,i) << " ";
+        for(int j=0; j<N; j++)       cout << eigenvectors_armadillo(j,i) << " ";
         cout << endl;
     }   // End for-loop over i
 }
@@ -225,16 +243,22 @@ void Diagonalization::print_sparse_Eigen()
 
 void Diagonalization::using_dense_eigen()
 {
+    if(given.sectorbool==true)          N = given.number_of_hits; // Should do something so that this if-test is not neccessary
+    else                                N = given.no_of_states;
+
     Eigen::EigenSolver<Eigen::MatrixXd> es(given.eigenH);  // Why won't this work?
 
-    //Eigen::VectorXd eigenvalues_H = es.eigenvalues();
-    //Eigen::MatrixXd eigenmatrix_H = es.eigenvectors();
+    //eigenvalues_H = es.eigenvalues();
+    //eigenmatrix_H = es.eigenvectors();
 
 }
 
 
 void Diagonalization::print_dense_using_eigen()
 {
+    if(given.sectorbool==true)          N = given.number_of_hits; // Should do something so that this if-test is not neccessary
+    else                                N = given.no_of_states;
+
     Eigen::EigenSolver<Eigen::MatrixXd> es(given.eigenH.cast<double>());
     cout << "The eigenvalues of H are:" << endl << es.eigenvalues() << endl;
     cout << "The matrix of eigenvectors, V, is:" << endl << es.eigenvectors() << endl << endl;
