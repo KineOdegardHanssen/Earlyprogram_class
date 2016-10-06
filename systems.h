@@ -2,14 +2,13 @@
 #define SYSTEMS_H
 #include <iostream>
 #include <vector>
-#include <sector.h>
 #include <cmath>
 #include <armadillo>
 #include <random>
 #include <complex>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <Eigen/QR>
+#include <Eigen/QR> 
 #include <Eigen/Eigenvalues>
 
 using namespace std;
@@ -18,14 +17,13 @@ class Systems
 {
 public:
 
-    unsigned long systemsize, no_of_states, mysector, number_of_hits;
-
+    int systemsize, number_of_hits, no_of_states, mysector;
     double h, J;
 
     bool dense, palhuse, sectorbool, ctbool ,armadillobool, testupip1downi, testdownip1upi;
 
     vector<double> hs;
-    vector<unsigned long int> sectorlist;
+    vector<int> sectorlist;
     typedef Eigen::Triplet<double> T;
 
     // For armadillo solvers        // Okay, the program flow certainly is awkward...
@@ -42,35 +40,35 @@ public:
 
     // Initializer
     Systems();
-    Systems(unsigned long systemsize, double J, double h, bool armadillobool);
-    Systems(unsigned long systemsize, double J, double h, bool armadillobool, bool dense);
+    Systems(int systemsize, double J, double h, bool armadillobool);
+    Systems(int systemsize, double J, double h, bool armadillobool, bool dense);
 
-    void set_mysector(unsigned long mysector);
+    void set_mysector(int mysector);
     void change_system(double h);
     void change_system(double h, double J);
     void create_armadillo_matrix();
-    void create_armadillo_matrix(unsigned long size);     // This is intended if we consider sectors
+    void create_armadillo_matrix(int size);     // This is intended if we consider sectors
     void create_dense_Eigen_matrix();
-    void create_dense_Eigen_matrix(unsigned long size);
+    void create_dense_Eigen_matrix(int size);
     void create_complex_Eigen_matrix();
-    void create_complex_Eigen_matrix(unsigned long size);
+    void create_complex_Eigen_matrix(int size);
 
     // Basic spin operations
-    unsigned long give_spin(unsigned long i, unsigned long a);
-    unsigned long set_spin_up(unsigned long i, unsigned long a);
-    unsigned long set_spin_down(unsigned long i, unsigned long a);
-    unsigned long flip_spin(unsigned long i, unsigned long a);
+    int give_spin(int i, int a);
+    int set_spin_up(int i, int a);
+    int set_spin_down(int i, int a);
+    int flip_spin(int i, int a);
 
     // Spin operators
-    double szi(unsigned long i, unsigned long a);
-    double szip1szi(unsigned long i, unsigned long a);
-    unsigned long upip1downi(unsigned long i, unsigned long a);  // A simpler version of spip1smi (if-test outside of function)
-    unsigned long downip1upi(unsigned long i, unsigned long a);  // A simpler version of smip1spi (if-test outside of function)
+    double szi(int i, int a);
+    double szip1szi(int i, int a);
+    int upip1downi(int i, int a);  // A simpler version of spip1smi (if-test outside of function)
+    int downip1upi(int i, int a);  // A simpler version of smip1spi (if-test outside of function)
 
     // State-specific functions
-    unsigned long number_of_up(unsigned long a);
-    unsigned long number_of_down(unsigned long a);
-    void checktestupdown(unsigned long j, unsigned long i);
+    int number_of_up(int a);
+    int number_of_down(int a);
+    void checktestupdown(int j, int i);
     void sector0();
     void sector1_2();          // Odd name, perhaps...
     void find_sector_sparse();
@@ -85,8 +83,8 @@ public:
 
 
     //Hamiltonians: Different kinds of systems
-    void set_elements(unsigned long i, unsigned long b);           // Should I use this instead of having different functions for each type of system
-    void palhuse_set_elements(unsigned long i, unsigned long b);
+    void set_elements(int i, int b);           // Should I use this instead of having different functions for each type of system
+    void palhuse_set_elements(int i, int b);
     // Sector Hamiltonians
     void palhuse_interacting_sectorHamiltonian_dense();   // Merge these?
     void palhuse_interacting_sectorHamiltonian_sparse();  //

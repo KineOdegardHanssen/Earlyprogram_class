@@ -5,58 +5,61 @@
 
 using namespace std;
 
-void system_total_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
-void system_sector0_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
-void system_sector1_2_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool);
+void system_total_hom(int systemsize, double h, double J, bool armabool, bool densebool);
+void system_sector0_hom(int systemsize, double h, double J, bool armabool, bool densebool);
+void system_sector1_2_hom(int systemsize, double h, double J, bool armabool, bool densebool);
 
 int main()
 {       
-    unsigned long systemsize = 2;
+    const bool TRACE = true;
+    int systemsize = 2;
     double J = 1;
     double h = 1;
     bool armabool = false;
     bool densebool = true;
 
-    cout << armabool << endl;
+    if(TRACE)    cout << "Well, at least I made it to main..." << endl;
 
-    //system_total_hom(systemsize, h, J, armabool, densebool);
-    system_sector0_hom(systemsize, h, J, armabool, densebool);
+    system_total_hom(systemsize, h, J, armabool, densebool);
+    //system_sector0_hom(systemsize, h, J, armabool, densebool);
     //system_sector1_2_hom(systemsize, h, J, armabool, densebool);
 
 }
 
-void system_total_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool)
+void system_total_hom(int systemsize, double h, double J, bool armabool, bool densebool)
 {
     Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
 
-    cout << "armabool = " << armabool << endl;
+    double set_system_start = clock();
     testsystem.set_hs_hom();
     testsystem.palhuse_interacting_totalHamiltonian();
-    testsystem.palhuse_diagonal_totalHamiltonian();
+    testsystem.palhuse_diagonal_totalHamiltonian();   
+    double set_system_end = clock();
+    double set_system_time = (set_system_end - set_system_start)/CLOCKS_PER_SEC;
 
-    for(unsigned long i=0; i<testsystem.no_of_states; i++)
+    // /*
+    for(int i=0; i<testsystem.number_of_hits; i++)
     {
-        for(unsigned long j=0; j<testsystem.no_of_states; j++)    cout << testsystem.eigenH(i,j) << " ";
+        for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.eigenH(i,j) << " ";
         cout << endl;
     }
 
+    cout << "I'm going to run diagonalization now" << endl;
     Diagonalization giveit = Diagonalization(testsystem);
-    giveit.using_dense_eigen();
-    giveit.print_dense_using_eigen();
-
     //giveit.using_armadillo();
     //giveit.print_using_armadillo();
+    // */
+    cout << "Diagonalization initiated" << endl;
+    giveit.lapack_directly();
 
-
-    //Diagonalization giveit2 = Diagonalization(testsystem);
-    //giveit2.lapack_directly();
+    cout << "Time needed to create the matrix: " << set_system_time << endl;
+    cout << "Computation time using lapack directly: " << giveit.lapacktime << endl;
 
 }
 
 
-void system_sector0_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool)
+void system_sector0_hom(int systemsize, double h, double J, bool armabool, bool densebool)
 {
-    cout << "systemsize: " << systemsize << endl;
 
     Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
 
@@ -78,9 +81,9 @@ void system_sector0_hom(unsigned long systemsize, double h, double J, bool armab
 
 
     /*
-    for(unsigned long i=0; i<testsystem.number_of_hits; i++)
+    for(int i=0; i<testsystem.number_of_hits; i++)
     {
-        for(unsigned long j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
+        for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
         cout << endl;
     }
     */
@@ -97,7 +100,7 @@ void system_sector0_hom(unsigned long systemsize, double h, double J, bool armab
     //cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
 }
 
-void system_sector1_2_hom(unsigned long systemsize, double h, double J, bool armabool, bool densebool)
+void system_sector1_2_hom(int systemsize, double h, double J, bool armabool, bool densebool)
 {
     Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
 
@@ -111,17 +114,20 @@ void system_sector1_2_hom(unsigned long systemsize, double h, double J, bool arm
     double set_system_time = (set_system_end - set_system_start)/CLOCKS_PER_SEC;
 
     // /*
-    for(unsigned long i=0; i<testsystem.number_of_hits; i++)
+    for(int i=0; i<testsystem.number_of_hits; i++)
     {
-        for(unsigned long j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
+        for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.eigenH(i,j) << " ";
         cout << endl;
     }
 
+    cout << "I'm going to run diagonalization now" << endl;
     Diagonalization giveit = Diagonalization(testsystem);
-    giveit.using_armadillo();
-    giveit.print_using_armadillo();
+    //giveit.using_armadillo();
+    //giveit.print_using_armadillo();
     // */
+    cout << "Diagonalization initiated" << endl;
+    giveit.lapack_directly();
 
     cout << "Time needed to create the matrix: " << set_system_time << endl;
-    cout << "Computation time using armadillo: " << giveit.armatime << endl;
+    cout << "Computation time using lapack directly: " << giveit.lapacktime << endl;
 }

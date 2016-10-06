@@ -34,7 +34,7 @@ public:
     arma::mat eigenvectors_armadillo;
 
     // For Eigen using dense matrices
-    Eigen::VectorXd eigenvalues_H;
+    Eigen::VectorXd eigenvalues_H;      // Not using these (yet...)
     Eigen::MatrixXd eigenmatrix_H;
 
 

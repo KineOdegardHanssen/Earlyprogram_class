@@ -16,7 +16,7 @@ Systems::Systems()
 {
 }
 
-Systems::Systems(unsigned long systemsize, double J, double h, bool armadillobool)
+Systems::Systems(int systemsize, double J, double h, bool armadillobool)
 {
     this->systemsize = systemsize;                // Is this notation really neccessary? Look it up
     this->no_of_states = pow(2, systemsize);
@@ -26,10 +26,11 @@ Systems::Systems(unsigned long systemsize, double J, double h, bool armadilloboo
     this->dense = false;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
+    ctbool = false;
     randomize();
 }
 
-Systems::Systems(unsigned long systemsize, double J, double h, bool armadillobool, bool dense)
+Systems::Systems(int systemsize, double J, double h, bool armadillobool, bool dense)
 {
     this->systemsize = systemsize;
     this->no_of_states = pow(2, systemsize);
@@ -39,13 +40,13 @@ Systems::Systems(unsigned long systemsize, double J, double h, bool armadilloboo
     this->dense = dense;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
+    ctbool = false;
     randomize();
 
-    cout << "In Systems. armadillobool = " << armadillobool << endl;
 }
 
 
-void Systems::set_mysector(unsigned long mysector)
+void Systems::set_mysector(int mysector)
 {
     this->mysector = mysector;
     if(dense==true)    find_sector_dense();
@@ -82,19 +83,19 @@ void Systems::change_system(double h, double J)
 void Systems::create_armadillo_matrix()
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
     armaH = arma::mat(no_of_states, no_of_states);
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
-        for(unsigned long j=0; j<no_of_states; j++)    armaH(i,j)= 0.0;
+        for(int j=0; j<no_of_states; j++)    armaH(i,j)= 0.0;
     }
     cout << "Arma matrix set. Max index no = " << no_of_states-1 << endl;
 }
 
-void Systems::create_armadillo_matrix(unsigned long size)
+void Systems::create_armadillo_matrix(int size)
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
     armaH = arma::mat(size, size);
-    for(unsigned long i=0; i<size; i++)
+    for(int i=0; i<size; i++)
     {
-        for(unsigned long j=0; j<size; j++)    armaH(i,j)= 0.0;
+        for(int j=0; j<size; j++)    armaH(i,j)= 0.0;
     }
     cout << "Arma matrix set. Max index no = " << size-1 << endl;
 }
@@ -102,20 +103,24 @@ void Systems::create_armadillo_matrix(unsigned long size)
 
 void Systems::create_dense_Eigen_matrix()
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
+    const bool TRACE = true;
+    if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(no_of_states, no_of_states);
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
-        for(unsigned long j=0; j<no_of_states; j++)    eigenH(i,j)= 0.0;
+        for(int j=0; j<no_of_states; j++)    eigenH(i,j)= 0.0;
     }
     cout << "Eigen matrix set. Max index no. = " << no_of_states-1 << endl;
 }
 
-void Systems::create_dense_Eigen_matrix(unsigned long size)
+void Systems::create_dense_Eigen_matrix(int size)
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
+    const bool TRACE = true;
+    if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(size, size);
-    for(unsigned long i=0; i<size; i++)
+    for(int i=0; i<size; i++)
     {
-        for(unsigned long j=0; j<size; j++)    eigenH(i,j)= 0.0;
+        for(int j=0; j<size; j++)    eigenH(i,j)= 0.0;
     }
     cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
 }
@@ -124,19 +129,19 @@ void Systems::create_complex_Eigen_matrix()
 {
     complexH = Eigen::MatrixXcd(no_of_states, no_of_states);
     complex<double> complexelem = 0.0;
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
-        for(unsigned long j=0; j<no_of_states; j++)    complexH(i,j)= complexelem;
+        for(int j=0; j<no_of_states; j++)    complexH(i,j)= complexelem;
     }
 }
 
-void Systems::create_complex_Eigen_matrix(unsigned long size)
+void Systems::create_complex_Eigen_matrix(int size)
 {
     complexH = Eigen::MatrixXcd(size, size);
     complex<double> complexelem = 0.0;
-    for(unsigned long i=0; i<size; i++)
+    for(int i=0; i<size; i++)
     {
-        for(unsigned long j=0; j<size; j++)    complexH(i,j)= complexelem;
+        for(int j=0; j<size; j++)    complexH(i,j)= complexelem;
     }
 }
 
@@ -145,22 +150,22 @@ void Systems::create_complex_Eigen_matrix(unsigned long size)
 
 //---------------------------------------BASIC SPIN OPERATIONS--------------------------------------------//
 
-unsigned long Systems::give_spin(unsigned long i, unsigned long a)
+int Systems::give_spin(int i, int a)
 {
     return ((a&(1<<i))>>i);
 }
 
-unsigned long Systems::set_spin_up(unsigned long i, unsigned long a)
+int Systems::set_spin_up(int i, int a)
 {
     return (a |(1<<i));
 }
 
-unsigned long Systems::set_spin_down(unsigned long i, unsigned long a)
+int Systems::set_spin_down(int i, int a)
 {
     return ~((~a)|(1<<i));
 }
 
-unsigned long Systems::flip_spin(unsigned long i, unsigned long a)      // This is not in use
+int Systems::flip_spin(int i, int a)      // This is not in use
 {
     return (a ^(1<<i));
 }
@@ -170,13 +175,13 @@ unsigned long Systems::flip_spin(unsigned long i, unsigned long a)      // This 
 //-------------------------------------------------/Sz/---------------------------------------------------//
 
 
-double Systems::szi(unsigned long i, unsigned long a)
+double Systems::szi(int i, int a)
 {
     if(give_spin(i,a)==0)    return -0.5;
     else                     return 0.5;
 }
 
-double Systems::szip1szi(unsigned long i, unsigned long a)
+double Systems::szip1szi(int i, int a)
 {
     double firstspin = szi(i, a);
     double secondspin = 0;
@@ -189,18 +194,18 @@ double Systems::szip1szi(unsigned long i, unsigned long a)
 //-------------------------------------------/S+ and S-/--------------------------------------------------//
 
 
-unsigned long Systems::upip1downi(unsigned long i, unsigned long a)
+int Systems::upip1downi(int i, int a)
 {
-    unsigned long a2 = 0;
+    int a2 = 0;
     if(i==(systemsize-1))            a2 = set_spin_up(0, a);         // Periodic boundary conditions
     else if(i<(systemsize-1))        a2 = set_spin_up((i+1), a);     //
     else                             cout << "Check your indices, woman!!" << endl;
     return set_spin_down(i, a2);
 }
 
-unsigned long Systems::downip1upi(unsigned long i, unsigned long a)
+int Systems::downip1upi(int i, int a)
 {
-    unsigned long a2 = 0;
+    int a2 = 0;
     if(i==(systemsize-1))            a2 = set_spin_down(0, a);       // Periodic boundary conditions
     else if(i<(systemsize-1))        a2 = set_spin_down((i+1), a);
     else                             cout << "Check your indices, woman!!" << endl;
@@ -211,23 +216,23 @@ unsigned long Systems::downip1upi(unsigned long i, unsigned long a)
 //-----------------------------------------STATE-SPECIFIC FUNCTIONS---------------------------------------//
 // Both of these functions work. It might be excessive to have number_of_down(a,systemsize) as a separate
 // funtction.
-unsigned long Systems::number_of_up(unsigned long a)
+int Systems::number_of_up(int a)
 {
-    unsigned long no_of_up = 0;
-    for(unsigned long i=0; i<systemsize; i++)    no_of_up += give_spin(i, a);
+    int no_of_up = 0;
+    for(int i=0; i<systemsize; i++)    no_of_up += give_spin(i, a);
     return no_of_up;
 }
 
-unsigned long Systems::number_of_down(unsigned long a)
+int Systems::number_of_down(int a)
 {
     return (systemsize - number_of_up(a));
 }
 
 // function for s0 sector
 
-void Systems::checktestupdown(unsigned long j,unsigned long i)
+void Systems::checktestupdown(int j,int i)
 {
-    unsigned long helpnumber = 0;
+    int helpnumber = 0;
 
 
     if(j!=(systemsize-1))
@@ -267,14 +272,13 @@ void Systems::sector1_2()
     else    cout << "A system of an even no. of particles have no S_tot = 1/2 states. Try another sector." << endl;
 }
 
-//Something is rotten in the state of sectors.
 void Systems::find_sector_sparse()
 {   // Should append to some list in some way... Armadillo? Eigen? Eigen.
-    //unsigned long number = 0;
+    //int number = 0;
     sectorbool = true;
     number_of_hits = 0;
-    sectorlist = vector<unsigned long int>(no_of_states);
-    for(unsigned long state=0; state<no_of_states; state++)
+    sectorlist = vector<int>(no_of_states);
+    for(int state=0; state<no_of_states; state++)
     {
         if(number_of_up(state)==mysector) // Well, something... Append to some list
         {
@@ -289,8 +293,8 @@ void Systems::find_sector_dense()
     // And that is not destroyed. Retrieve it in main, perhaps.
     sectorbool = true;
     number_of_hits = 0;
-    sectorlist = vector<unsigned long>(no_of_states);
-    for(unsigned long state=0; state<no_of_states; state++)
+    sectorlist = vector<int>(no_of_states);
+    for(int state=0; state<no_of_states; state++)
     {
         if(number_of_up(state)==mysector)
         {
@@ -301,7 +305,7 @@ void Systems::find_sector_dense()
     if(number_of_hits > 0)                   trim_sectorlist();
     else
     {
-        sectorlist = vector<unsigned long>(1);
+        sectorlist = vector<int>(1);
         sectorlist[0] = 0;
         number_of_hits = 1;
     }
@@ -309,8 +313,8 @@ void Systems::find_sector_dense()
 
 void Systems::trim_sectorlist()
 {   // A function that cuts sectorlist off as it detects a zero
-    vector<unsigned long> sectorlist_short = vector<unsigned long>(number_of_hits);
-    for(unsigned long i=0; i<number_of_hits; i++)     sectorlist_short[i] = sectorlist[i];
+    vector<int> sectorlist_short = vector<int>(number_of_hits);
+    for(int i=0; i<number_of_hits; i++)     sectorlist_short[i] = sectorlist[i];
         sectorlist = sectorlist_short;
 }
 
@@ -322,7 +326,7 @@ void Systems::randomize()
 {
     std::default_random_engine generator;        // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution(-h,h);
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
         hs[i] = distribution(generator);   // This should do it
     } // End for-loop
@@ -335,7 +339,7 @@ void Systems::set_hs(vector<double> hs_in)
 
 void Systems::set_hs_hom()
 {
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
         hs[i] = h;   // This should do it
     } // End for-loop
@@ -343,7 +347,7 @@ void Systems::set_hs_hom()
 
 void Systems::set_hs_alt()
 {
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
         hs[i] = h*pow(-1,i);   // This should do it
     } // End for-loop
@@ -352,15 +356,15 @@ void Systems::set_hs_alt()
 
 //-------------------------------------------/HAMILTONIANS/--------------------------------------------//
 
-void Systems::set_elements(unsigned long i, unsigned long b)
+void Systems::set_elements(int i, int b)
 {
     if(palhuse==true)    palhuse_set_elements(i, b);
 }
 
-void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
+void Systems::palhuse_set_elements(int i, int b)
 {
-    unsigned long index1 = 0;
-    unsigned long index2 = 0;
+    int index1 = 0;
+    int index2 = 0;
     if(sectorbool==false)
     {
         index1 = no_of_states - (b+1);
@@ -412,16 +416,32 @@ void Systems::palhuse_set_elements(unsigned long i, unsigned long b)
 
 void Systems::palhuse_interacting_sectorHamiltonian_dense()
 {
-    if(armadillobool == true)                   create_armadillo_matrix(number_of_hits);
-    if(armadillobool==true && ctbool==false)    create_dense_Eigen_matrix(number_of_hits);
-    else                                        create_complex_Eigen_matrix(number_of_hits);
+    const bool TRACE = true;
+    if(TRACE)    cout << "At least I am in palhuse_interacting_sectorHamiltonian" << endl;
 
-    unsigned long a = 0;
-    unsigned long b = 0;
-    for(unsigned long i=0; i<number_of_hits; i++)
+    if(armadillobool)
+    {
+        if(TRACE)    cout << "I am initializing the armadillo matrix" << endl;
+
+        create_armadillo_matrix(number_of_hits);
+    }
+    if(armadillobool==false && ctbool==false)
+    {
+        if(TRACE)    cout << "I am initializing the dense, real Eigen matrix" << endl;
+        create_dense_Eigen_matrix(number_of_hits);
+    }
+    else
+    {
+        if(TRACE)    cout << "I am initializing the dense, complex Eigen matrix" << endl;
+        create_complex_Eigen_matrix(number_of_hits);
+    }
+
+    int a = 0;
+    int b = 0;
+    for(int i=0; i<number_of_hits; i++)
     {
         a = sectorlist[i];
-        for(unsigned long j=0; j<systemsize; j++)
+        for(int j=0; j<systemsize; j++)
 
         {   // Should I include a while loop, or something?
 
@@ -429,7 +449,7 @@ void Systems::palhuse_interacting_sectorHamiltonian_dense()
             if(testupip1downi==true)
             {
                 b = upip1downi(j, a);
-                for(unsigned long k = 0; k<number_of_hits; k++)
+                for(int k = 0; k<number_of_hits; k++)
                 {
                     if(b==sectorlist[k])  set_elements(i, k);
                 }
@@ -437,33 +457,34 @@ void Systems::palhuse_interacting_sectorHamiltonian_dense()
             if(testdownip1upi==true)
             {
                 b = downip1upi(j, a);
-                for(unsigned long k = 0; k<number_of_hits; k++)
+                for(int k = 0; k<number_of_hits; k++)
                 {
                     if(b==sectorlist[k])  set_elements(i, k);
                 }
             }
-        } // End s+_{i+1}s-_{i} part
-    } // End for j
-}  // End for i
+        } // End for j
+    } // End for i
+    if(TRACE)    cout << "Exiting palhuse_interacting_sectorHamiltonian" << endl;
+}
 
 
 
 void Systems::palhuse_interacting_sectorHamiltonian_sparse()
 {
     // The Hamiltonian is hermittian, i.e. symmetric about the diagonal, so we need not change the indices.
-    unsigned long length = number_of_hits << 3;
+    int length = number_of_hits << 3;
 
     currentTriplet = T(0,0,0);
     tripletList.reserve(length);     // Is this too big?
 
-    unsigned long a = 0;
-    unsigned long b = 0;
+    int a = 0;
+    int b = 0;
 
-    for(unsigned long i=0; i<no_of_states; i++)  // This is excessive, but whatever...
+    for(int i=0; i<no_of_states; i++)  // This is excessive, but whatever...
     {   // Should I include a while loop, or something?
         a = sectorlist[i];  // Get no contribution from the zero elements, but they do steal computation time
         // spi1psmi, upip1downi
-        for(unsigned long j=0; j<systemsize; j++)
+        for(int j=0; j<systemsize; j++)
         {           
             checktestupdown(j,a);
             if(testupip1downi==true)
@@ -476,21 +497,22 @@ void Systems::palhuse_interacting_sectorHamiltonian_sparse()
                 b = downip1upi(j, a);
                 set_elements(a,b);
             }
-        } // End s+_{i+1}s-_{i} part
-    } // End for j
-}  // End for i
+        } // End for j
+    } // End for i
+}
 
 
 void Systems::palhuse_diagonal_sectorHamiltonian()
 {
+    const bool TRACE = true;
     // Do something like index = no_of_states - i that works for this one.
     // For now, the matrix is upside down, but we have gotten a list of its entries: sectorlist.
     double element = 0;
-    for(unsigned long i=0; i<number_of_hits; i++)
+    for(int i=0; i<number_of_hits; i++)
     {
         element = 0;
-        unsigned long a = sectorlist[i];
-        for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
+        int a = sectorlist[i];
+        for(int j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
         if(dense==false)
         {
             currentTriplet = T(i,i,element);
@@ -504,53 +526,64 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
             complexH(i,i) = c_element;
         }
     } // End for-loop over i
+    if(TRACE)    cout << "Exiting palhuse_diagonal_sectorHamiltonian" << endl;
 } // End function palhuse_random_sectorHamiltonian_dense
 
 //-------------------------------------------TOTAL HAMILTONIAN--------------------------------------------//
 
 void Systems::palhuse_interacting_totalHamiltonian()
 {
-    unsigned long length = no_of_states << 3;
+    int length = no_of_states << 3;
 
     currentTriplet = T(0,0,0);
     tripletList.reserve(length);     // Is this too big?
 
-    if(armadillobool==true)                                        create_armadillo_matrix();
-    if(armadillobool==true && ctbool==false)                       create_dense_Eigen_matrix();
-    else                                                           create_complex_Eigen_matrix();
+    if(armadillobool)                                               create_armadillo_matrix();
+    if(armadillobool==false && ctbool==false)                       create_dense_Eigen_matrix();
+    else                                                            create_complex_Eigen_matrix();
     sectorbool=false;
 
-    unsigned long b = 0;
-    for(unsigned long i=0; i<no_of_states; i++)
+    cout << "We passed all the bool tests in palhuse_interacting_totalHamiltonian" << endl;
+
+    number_of_hits = no_of_states; // Have a test if(sectorbool) and set this, maybe along with some other statements, and drop separate functions for total and sector Hamiltonians?
+
+    int b = 0;
+    for(int i=0; i<no_of_states; i++)
     {   // i is our state
-        for(unsigned long j=0; j<systemsize; j++)
+        for(int j=0; j<systemsize; j++)
         {
             checktestupdown(j,i);
+            cout << "Preparing to check if S+S- gives any contribution" << endl;
             if(testupip1downi==true)
             {
+                cout << "In S-ip1S+i. Finding new state" << endl;
                 b = upip1downi(j, i);
+                cout << "setting elements" << endl;
                 set_elements(i,b);
             }
             if(testdownip1upi==true)
             {
+                cout << "In S-ip1S+i. Finding new state" << endl;
                 b = downip1upi(j, i);
+                cout << "setting elements" << endl;
                 set_elements(i,b);
             }
         } // End for j
     } // End for i
+    cout << "Exited palhuse_interacting_totalHamiltonian successfully." << endl;
 } // End function
 
 
 
 void Systems::palhuse_diagonal_totalHamiltonian()
 {
-    unsigned long index = 0;
+    int index = 0;
     double element = 0;
-    for(unsigned long i=0; i<no_of_states; i++)
+    for(int i=0; i<no_of_states; i++)
     {
         element = 0;
         // The 2-particle case is special again...
-        for(unsigned long j=0; j<systemsize; j++)  element += hs[j]*szi(j, i) + J*szip1szi(j,i);
+        for(int j=0; j<systemsize; j++)  element += hs[j]*szi(j, i) + J*szip1szi(j,i);
         index = no_of_states - (i+1);
         currentTriplet = T(index,index,element);
         tripletList.push_back(currentTriplet);
