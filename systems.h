@@ -4,8 +4,8 @@
 #include <vector>
 #include <cmath>
 #include <armadillo>
-#include <random>
-#include <complex>
+//#include <random>    // Need this or something like it
+//#include <complex>   // But not this
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/QR> 
@@ -20,7 +20,7 @@ public:
     int systemsize, number_of_hits, no_of_states, mysector;
     double h, J;
 
-    bool dense, palhuse, sectorbool, ctbool ,armadillobool, testupip1downi, testdownip1upi;
+    bool dense, palhuse, sectorbool, armadillobool, testupip1downi, testdownip1upi;
 
     vector<double> hs;
     vector<int> sectorlist;
@@ -28,7 +28,6 @@ public:
 
     // For armadillo solvers        // Okay, the program flow certainly is awkward...
     arma::mat armaH;
-    arma::cx_mat armaHcompl;
 
     // For Eigen solvers
     Eigen::Triplet<double> currentTriplet;
@@ -36,7 +35,6 @@ public:
     Eigen::SparseMatrix<double> sparseH;          // Or get this from systems?
 
     Eigen::MatrixXd eigenH;
-    Eigen::Matrix2Xcd complexH;
 
     // Initializer
     Systems();
@@ -50,8 +48,6 @@ public:
     void create_armadillo_matrix(int size);     // This is intended if we consider sectors
     void create_dense_Eigen_matrix();
     void create_dense_Eigen_matrix(int size);
-    void create_complex_Eigen_matrix();
-    void create_complex_Eigen_matrix(int size);
 
     // Basic spin operations
     int give_spin(int i, int a);

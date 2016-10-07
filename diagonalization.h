@@ -28,7 +28,7 @@ public:
 
 
     // For armadillo solvers
-    double armatime, lapacktime;
+    double armatime, eigen_time, lapacktime;
     arma::vec eigenvalues_armadillo; // Should I use arma::vec? Probably a good idea. Eigen probably has something similar
     arma::mat eigenvectors_armadillo;
 

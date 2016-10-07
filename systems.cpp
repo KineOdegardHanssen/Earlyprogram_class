@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cmath>
 #include <armadillo>
-#include <random>
+//#include <random>             // Just leaving this out for now...
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include <Eigen/QR>
@@ -26,8 +26,7 @@ Systems::Systems(int systemsize, double J, double h, bool armadillobool)
     this->dense = false;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
-    ctbool = false;
-    randomize();
+    //randomize();
 }
 
 Systems::Systems(int systemsize, double J, double h, bool armadillobool, bool dense)
@@ -40,8 +39,7 @@ Systems::Systems(int systemsize, double J, double h, bool armadillobool, bool de
     this->dense = dense;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
-    ctbool = false;
-    randomize();
+    //randomize();
 
 }
 
@@ -87,7 +85,7 @@ void Systems::create_armadillo_matrix()
     {
         for(int j=0; j<no_of_states; j++)    armaH(i,j)= 0.0;
     }
-    cout << "Arma matrix set. Max index no = " << no_of_states-1 << endl;
+    //cout << "Arma matrix set. Max index no = " << no_of_states-1 << endl;
 }
 
 void Systems::create_armadillo_matrix(int size)
@@ -97,53 +95,34 @@ void Systems::create_armadillo_matrix(int size)
     {
         for(int j=0; j<size; j++)    armaH(i,j)= 0.0;
     }
-    cout << "Arma matrix set. Max index no = " << size-1 << endl;
+    //cout << "Arma matrix set. Max index no = " << size-1 << endl;
 }
 
 
 void Systems::create_dense_Eigen_matrix()
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
-    const bool TRACE = true;
-    if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
+    //const bool TRACE = false;
+    //if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(no_of_states, no_of_states);
     for(int i=0; i<no_of_states; i++)
     {
         for(int j=0; j<no_of_states; j++)    eigenH(i,j)= 0.0;
     }
-    cout << "Eigen matrix set. Max index no. = " << no_of_states-1 << endl;
+    //cout << "Eigen matrix set. Max index no. = " << no_of_states-1 << endl;
 }
 
 void Systems::create_dense_Eigen_matrix(int size)
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
-    const bool TRACE = true;
-    if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
+    //const bool TRACE = false;
+    //if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(size, size);
     for(int i=0; i<size; i++)
     {
         for(int j=0; j<size; j++)    eigenH(i,j)= 0.0;
     }
-    cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
+    //cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
 }
 
-void Systems::create_complex_Eigen_matrix()
-{
-    complexH = Eigen::MatrixXcd(no_of_states, no_of_states);
-    complex<double> complexelem = 0.0;
-    for(int i=0; i<no_of_states; i++)
-    {
-        for(int j=0; j<no_of_states; j++)    complexH(i,j)= complexelem;
-    }
-}
-
-void Systems::create_complex_Eigen_matrix(int size)
-{
-    complexH = Eigen::MatrixXcd(size, size);
-    complex<double> complexelem = 0.0;
-    for(int i=0; i<size; i++)
-    {
-        for(int j=0; j<size; j++)    complexH(i,j)= complexelem;
-    }
-}
 
 
 
@@ -324,12 +303,14 @@ void Systems::trim_sectorlist()
 
 void Systems::randomize()
 {
+    /*
     std::default_random_engine generator;        // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution(-h,h);
     for(int i=0; i<no_of_states; i++)
     {
         hs[i] = distribution(generator);   // This should do it
     } // End for-loop
+    */
 }  // End function randomize
 
 void Systems::set_hs(vector<double> hs_in)
@@ -402,39 +383,17 @@ void Systems::palhuse_set_elements(int i, int b)
             eigenH(index2, index1) = element;
         }
     }
-
-    if(ctbool==true)
-    {   // Or could I just recast?
-        double c_element = 0;
-        if(systemsize == 2)        c_element = J;  // Special case. BCs and small
-        else                       c_element = 0.5*J;
-        complexH(index1, index2) = c_element;
-        complexH(index2, index1) = c_element;
-    }
 }
 //----------------------------------------SECTOR HAMILTONIANS---------------------------------------------//
 
 void Systems::palhuse_interacting_sectorHamiltonian_dense()
 {
-    const bool TRACE = true;
+    const bool TRACE = false;
     if(TRACE)    cout << "At least I am in palhuse_interacting_sectorHamiltonian" << endl;
 
-    if(armadillobool)
-    {
-        if(TRACE)    cout << "I am initializing the armadillo matrix" << endl;
+    if(armadillobool)        create_armadillo_matrix(number_of_hits);
 
-        create_armadillo_matrix(number_of_hits);
-    }
-    if(armadillobool==false && ctbool==false)
-    {
-        if(TRACE)    cout << "I am initializing the dense, real Eigen matrix" << endl;
-        create_dense_Eigen_matrix(number_of_hits);
-    }
-    else
-    {
-        if(TRACE)    cout << "I am initializing the dense, complex Eigen matrix" << endl;
-        create_complex_Eigen_matrix(number_of_hits);
-    }
+    if(armadillobool==false)        create_dense_Eigen_matrix(number_of_hits);
 
     int a = 0;
     int b = 0;
@@ -504,7 +463,7 @@ void Systems::palhuse_interacting_sectorHamiltonian_sparse()
 
 void Systems::palhuse_diagonal_sectorHamiltonian()
 {
-    const bool TRACE = true;
+    const bool TRACE = false;
     // Do something like index = no_of_states - i that works for this one.
     // For now, the matrix is upside down, but we have gotten a list of its entries: sectorlist.
     double element = 0;
@@ -519,12 +478,7 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
             tripletList.push_back(currentTriplet);
         }
         else if((dense==true) && (armadillobool == true))                       armaH(i,i) = element;
-        else if((dense==true) && (armadillobool == false) && (ctbool==false))   eigenH(i,i) = element;
-        else if((dense==true) && (armadillobool == false) && (ctbool==true))
-        {
-            complex<double> c_element = element+ 0*i;
-            complexH(i,i) = c_element;
-        }
+        else if((dense==true) && (armadillobool == false))                      eigenH(i,i) = element;
     } // End for-loop over i
     if(TRACE)    cout << "Exiting palhuse_diagonal_sectorHamiltonian" << endl;
 } // End function palhuse_random_sectorHamiltonian_dense
@@ -539,11 +493,8 @@ void Systems::palhuse_interacting_totalHamiltonian()
     tripletList.reserve(length);     // Is this too big?
 
     if(armadillobool)                                               create_armadillo_matrix();
-    if(armadillobool==false && ctbool==false)                       create_dense_Eigen_matrix();
-    else                                                            create_complex_Eigen_matrix();
+    if(armadillobool==false)                                        create_dense_Eigen_matrix();
     sectorbool=false;
-
-    cout << "We passed all the bool tests in palhuse_interacting_totalHamiltonian" << endl;
 
     number_of_hits = no_of_states; // Have a test if(sectorbool) and set this, maybe along with some other statements, and drop separate functions for total and sector Hamiltonians?
 
@@ -553,24 +504,18 @@ void Systems::palhuse_interacting_totalHamiltonian()
         for(int j=0; j<systemsize; j++)
         {
             checktestupdown(j,i);
-            cout << "Preparing to check if S+S- gives any contribution" << endl;
             if(testupip1downi==true)
             {
-                cout << "In S-ip1S+i. Finding new state" << endl;
                 b = upip1downi(j, i);
-                cout << "setting elements" << endl;
                 set_elements(i,b);
             }
             if(testdownip1upi==true)
             {
-                cout << "In S-ip1S+i. Finding new state" << endl;
                 b = downip1upi(j, i);
-                cout << "setting elements" << endl;
                 set_elements(i,b);
             }
         } // End for j
     } // End for i
-    cout << "Exited palhuse_interacting_totalHamiltonian successfully." << endl;
 } // End function
 
 
@@ -589,12 +534,7 @@ void Systems::palhuse_diagonal_totalHamiltonian()
         tripletList.push_back(currentTriplet);
 
         if((dense==true) && (armadillobool==true))                            armaH(index,index) = element;
-        else if((dense==true) && (armadillobool==false) && (ctbool==false))   eigenH(index,index) = element;
-        else if((dense==true) && (armadillobool==false) && (ctbool==true))
-        {
-            complex<double> c_element = element + 0*i;
-            complexH(index,index) = c_element;
-        }
+        else if((dense==true) && (armadillobool==false))                      eigenH(index,index) = element;
         else if(dense==false)
         {
             sparseH = Eigen::SparseMatrix<double>(no_of_states, no_of_states);
