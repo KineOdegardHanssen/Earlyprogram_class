@@ -1,9 +1,11 @@
 #include "quantities.h"
 
 // Okay, so this whole thing is based on only wanting to use lapack directly for the diagonalization
-
-Quantities::Quantities()
+// Armadillo is faster for some reason, though...
+Quantities::Quantities(int maxit,double tolerance)
 {
+    this->maxit = maxit;
+    this->tolerance = tolerance;
     eig_all = Diagonalization();
     N = eig_all.N;
     eigvals = eig_all.eigenvalues_H;
@@ -14,20 +16,18 @@ Quantities::Quantities()
 
 //----------------------------------------BASIC FUNCTIONS-------------------------------------------------//
 
-void Quantities::min_eigenvalue_of_sector()   // Don't need this? Can take eigvals.minCoeff() instead?
-{
-    // Don't need this?
-    //for(int i=0; i<N; i++)
-    //{
-    //
-    //}
+void Quantities::calculateZ()
+{   //Have divided by exp(-beta*min_ev). Do the same everywhere else it is needed, so that it cancels.
+    Z = 0;
+    for(int i=0; i<N; i++)
+    {
+        Z += exp(betatest*(min_ev-eigvals[i]));  // Is it wiser to point in introduce a temporary vealue for Z?
+    }
 }
 
 
-
-
 //----------------------------------------FINDING BETA, ETC-----------------------------------------------//
-void Quantities::findbeta(double eigenvalue)  // Uses Newtons method. Should I call it newtonsmethod, in case I want to test the bisection method too? The bisection method is safer, but must specify an interval.
+void Quantities::newtonsmethod(double eigenvalue)  // Uses Newtons method. Should I call it newtonsmethod, in case I want to test the bisection method too? The bisection method is safer, but must specify an interval.
 { // Ooops, loops?
     double betatest = 0.5; // Arbitrary small value, hopefully close to our zero point.
     double diff = 1000.0;
@@ -44,6 +44,35 @@ void Quantities::findbeta(double eigenvalue)  // Uses Newtons method. Should I c
         //prevdiff = diff;
         //if(abs(prevprevdiff - diff) < 1e-15)  break; // To prevent the program from bouncing back and forth
     }
+    beta = betaattempt;    // Is setting beta this way really the wisest?
+}
+
+void Quantities::bisectionmethod(double eigenvalue)
+{
+    double a = -1;
+    double b = 1;
+    double c = 0;
+    double counter = 0;
+    double fa = self_consistency_beta(eigenevalue,a);
+    double fb = self_consistency_beta(eigenvalue, b);
+    double diff = abs(fa);
+    while(diff > tolerance && counter < maxit)
+    {
+        c = (a+b)/2;
+        fc = self_consistency_beta(eigenvelue, c);
+        if(sign(fa)==sign(fc))
+        {
+            a = c;
+            fa = fc;
+        }
+        else
+        {
+            b = c;
+            fb = fc;
+        }
+        counter++;
+    }
+    beta = c;
 }
 
 void Quantities::self_consistency_beta(double eigenvalue, double betatest)
@@ -69,3 +98,17 @@ void Quantities::self_consistency_beta_derivative(double eigenvalue, double beta
     }
     return en_sum_der_test - Z_der_test*eigenvalue;
 }
+
+//----------------------------------------FUNCTIONS FOR THE TRACE-----------------------------------------//
+
+ void Quantities::thermaltrace()
+ {
+     // Setting up the thermal matrix.
+     calculateZ();
+     double Zf = 1/Z;         // Since dividing is computationally expensive. But can we do something like A = A/Z ? seems a bit high-level.
+     Eigen::MatrixXd A(N,N);  // Is this the correct notation?
+     for(int i=0; i<N; i++)
+     {
+         for(int j=0; j<N; j++)    A(i,j) += Zf*exp(beta*(min_ev-eigval_s(i))*eigmat(i,i)*eigmat(j,i);   // Double check that this is correct. Think so since the eigenvectors in eigmat are stored as column vectors.s
+     }
+ }
