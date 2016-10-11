@@ -2,17 +2,25 @@
 
 // Okay, so this whole thing is based on only wanting to use lapack directly for the diagonalization
 // Armadillo is faster for some reason, though...
-Quantities::Quantities(int maxit,double tolerance)
+Quantities::Quantities(int maxit, double tolerance, Systems system)
 {
     this->maxit = maxit;
     this->tolerance = tolerance;
-    eig_all = Diagonalization();
+    this->system = system;         // Double check the implementation here
+
+    systemsize = system.systemsize;
+
+
+    eig_all = Diagonalization(system);  // Send in as an address? Or just give all the relevant variables?
     N = eig_all.N;
     eigvals = eig_all.eigenvalues_H;
     eigmat = eig_all.eigenmatrix_H;
     min_ev = eigvals.minCoeff();
 
 }
+
+
+// I need a way to choose eigenstates to look at. Store information in a vector or matrix of some sort?
 
 //----------------------------------------BASIC FUNCTIONS-------------------------------------------------//
 
@@ -53,13 +61,13 @@ void Quantities::bisectionmethod(double eigenvalue)
     double b = 1;
     double c = 0;
     double counter = 0;
-    double fa = self_consistency_beta(eigenevalue,a);
+    double fa = self_consistency_beta(eigenvalue,a);
     double fb = self_consistency_beta(eigenvalue, b);
     double diff = abs(fa);
     while(diff > tolerance && counter < maxit)
     {
         c = (a+b)/2;
-        fc = self_consistency_beta(eigenvelue, c);
+        fc = self_consistency_beta(eigenvalue, c);
         if(sign(fa)==sign(fc))
         {
             a = c;
@@ -100,6 +108,27 @@ void Quantities::self_consistency_beta_derivative(double eigenvalue, double beta
 }
 
 //----------------------------------------FUNCTIONS FOR THE TRACE-----------------------------------------//
+
+Eigen::MatrixXd Quantities::trace_Eigen(Eigen::MatrixXd A)  // Should I just do armadillo instead?
+{
+    // Include an if-test
+    int traceN = N >> 1; // This works for the whole matrix only. Not quite sure what will happen for sectors.
+    Eigen::MatrixXd trace_matrix(traceN, traceN);  // But the dimension is not systemsize, is it?
+    int index1, index2;
+    for(int k=0; k<traceN; k++)
+    {
+        for(int l=0; l<traceN; l++)
+        {
+            for(int j=0; j<N; j++)
+            {
+                index1 = (k-1)*N+j;
+                index2 = (l-1)*N+j;
+                trace_matrix(k,l) +=A(index1,index2);
+
+            }
+        }
+    }
+}
 
  void Quantities::thermaltrace()
  {

@@ -19,17 +19,17 @@ public:
     // One class on top of this, like runnit for 2p?
 
 
-    //Systems system;            // Should I do something like this and nest them?  // Worry about this later
+    Systems system;            // Should I do something like this and nest them?  // Worry about this later
     Diagonalization eig_all;
 
-    int N, maxit;
+    int N, maxit, systemsize;
     double Z, beta, min_ev, tolerance; // Only change smallest_ev this for every new instance of quantities...
 
     Eigen::VectorXd eigvals;
     Eigen::MatrixXd eigmat;
 
     // Initializer
-    Quantities(Systems system);
+    Quantities(int maxit, double tolerance, Systems system);
 
 
     //Functions
@@ -46,6 +46,7 @@ public:
     double self_consistency_beta_derivative(double eigenvalue, double betatest);
 
     // Taking the trace
+    Eigen::MatrixXd trace_Eigen(Eigen::MatrixXd A); // Or for armadillo?
     void thermaltrace(); // See if I change this a bit.
 };
 
