@@ -2,6 +2,8 @@
 #include <vector>
 #include <systems.h>
 #include <diagonalization.h>
+#include <quantities.h>      // Do I really need this?
+#include <running.h>
 
 using namespace std;
 
@@ -12,17 +14,21 @@ void system_sector1_2_hom(int systemsize, double h, double J);
 int main()
 {       
     const bool TRACE = false;
-    int systemsize = 15;
+    int systemsize = 2;
+    int maxit = 1e7;
     double J = 1;
     double h = 1;
-    //bool armabool = false;
+    double tolerance = 1e-10;
+    bool armabool = true;
 
     if(TRACE)    cout << "Well, at least I made it to main..." << endl;
 
     //system_total_hom(systemsize, h, J);
     //system_sector0_hom(systemsize, h, J);
-    system_sector1_2_hom(systemsize, h, J);
+    //system_sector1_2_hom(systemsize, h, J);
 
+    Running runit = Running(systemsize, maxit, h, J, tolerance, armabool);
+    runit.homogenous_field(systemsize, h, J);  // Should I change this call?
 }
 
 void system_total_hom(int systemsize, double h, double J)

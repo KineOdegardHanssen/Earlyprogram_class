@@ -1,5 +1,11 @@
 #include "running.h"
 
+Running::Running()    // Just in case I forget.
+{
+    armadillobool = true;
+    cout << "Forgot to give armadillobool. Running for armadillobool=true." << endl;
+}
+
 Running::Running(bool armadillobool)    // Constructor for big runs
 {
     this->armadillobool = armadillobool;
@@ -15,6 +21,7 @@ Running::Running(int systemsize, int maxit, double h, double J, double tolerance
 
 void Running::homogenous_field(int systemsize, double h, double J)
 {
+    // Only works for the total Hamiltonian so far...
     system = Systems(systemsize, J, h, armadillobool);
 
     system.set_hs_hom();
@@ -34,12 +41,15 @@ void Running::homogenous_field(int systemsize, double h, double J)
     }
 
     Quantities quants = Quantities(maxit, tolerance, armadillobool, system, eig_all);
-
-
+    for(int i=quants.li; i<=quants.lh; i++)   // Something is wrong here
+    {
+        cout << "Eigenvalue no." << i << "; Abs. diff. between first matrix elements: " << quants.ETH(i) << endl;
+    }
 }
 
 
 void Running::alternating_field(int systemsize, double h, double J)
 {
+    // Similar implementation as for the homogenous field.
 
 }

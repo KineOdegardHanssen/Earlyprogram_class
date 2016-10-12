@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 //#include <Eigen/Sparse>
 #include <Eigen/QR>            // I don't really use this...
-#include <Eigen/Eigenvalues>
+#include <Eigen/Eigenvalues>   // I guess I don't need this here..
 #include<vector>
 #include<complex>
 
@@ -22,7 +22,7 @@ public:
     Systems system;            // Should I do something like this and nest them?  // Worry about this later
     Diagonalization eig_all;
 
-    int N, maxit, systemsize;
+    int N, maxit, systemsize, li, lh;
     double Z, beta, min_ev, tolerance; // Only change smallest_ev this for every new instance of quantities...
     bool armadillobool;
 
@@ -40,7 +40,7 @@ public:
     //Functions
 
     // Basic functions
-    //int sign(double a);
+    void sort_energies();
     int signcompare(double fa, double fc);
     void calculateZ();
 
@@ -51,8 +51,17 @@ public:
     void bisectionmethod(double eigenvalue);
     double self_consistency_beta(double eigenvalue, double betatest);
     double self_consistency_beta_derivative(double eigenvalue, double betatest);
+    // armadillo
+    void newtonsmethod_arma(double eigenvalue);
+    void bisectionmethod_arma(double eigenvalue);
+    double self_consistency_beta_a(double eigenvalue, double betatest);
+    double self_consistency_beta_derivative_a(double eigenvalue, double betatest);
 
     // Eigenstate Thermalization Hypothesis
+    double ETH(int i);       // Should this really be a void?
+    double ETH_arma(int i);
+    double ETH_Eigen(int i);
+
     // Eigen
     Eigen::MatrixXd trace_Eigen(Eigen::MatrixXd A);
     Eigen::MatrixXd thermalmat_Eigen();             // See if I change this a bit.
