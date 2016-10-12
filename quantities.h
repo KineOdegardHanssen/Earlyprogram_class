@@ -24,17 +24,24 @@ public:
 
     int N, maxit, systemsize;
     double Z, beta, min_ev, tolerance; // Only change smallest_ev this for every new instance of quantities...
+    bool armadillobool;
 
     Eigen::VectorXd eigvals;
     Eigen::MatrixXd eigmat;
 
+    arma::vec eigvals_a;  // This will probably be a problem...
+    arma::mat eigmat_a;   // Could rename it at each step. Troublesome...
+
+
     // Initializer
-    Quantities(int maxit, double tolerance, Systems system);
+    Quantities(int maxit, double tolerance, bool armadillobool, Systems system, Diagonalization eig_all);
 
 
     //Functions
 
     // Basic functions
+    //int sign(double a);
+    int signcompare(double fa, double fc);
     void calculateZ();
 
     // Finding beta
@@ -45,9 +52,16 @@ public:
     double self_consistency_beta(double eigenvalue, double betatest);
     double self_consistency_beta_derivative(double eigenvalue, double betatest);
 
-    // Taking the trace
-    Eigen::MatrixXd trace_Eigen(Eigen::MatrixXd A); // Or for armadillo?
-    void thermaltrace(); // See if I change this a bit.
+    // Eigenstate Thermalization Hypothesis
+    // Eigen
+    Eigen::MatrixXd trace_Eigen(Eigen::MatrixXd A);
+    Eigen::MatrixXd thermalmat_Eigen();             // See if I change this a bit.
+    Eigen::MatrixXd eigenstatemat_Eigen(int i);
+
+    // Armadillo
+    arma::mat trace_arma(arma::mat A);
+    arma::mat thermalmat_arma();                    // See if I change this a bit.
+    arma::mat eigenstatemat_arma(int i);
 };
 
 #endif // QUANTITIES_H

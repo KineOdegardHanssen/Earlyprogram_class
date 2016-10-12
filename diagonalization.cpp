@@ -44,7 +44,7 @@ void Diagonalization::lapack_directly()
 
     // note, to understand this part take a look in the MAN pages, at section of parameters.
 
-    double start_time_lapack_directly = clock();
+
     JOBS = 'V';
     //if(TRACE)          cout << "JOBS OK," << endl;
     UPLO = 'L';
@@ -56,7 +56,7 @@ void Diagonalization::lapack_directly()
     int INFO;
     //if(TRACE)          cout << "INFO declared," << endl;
 
-    std::vector<double> WORK  = std::vector<double> (LWORK); // What filetype is this?
+    std::vector<double> WORK  = std::vector<double> (LWORK);
     //if(TRACE)          cout << "WORK OK," << endl;
     //std::vector<double> RWORK = std::vector<double>(3*N-2);
     std::vector<double> W     = std::vector<double>(N);
@@ -68,7 +68,7 @@ void Diagonalization::lapack_directly()
 
     // end of declarations
 
-
+    double start_time_lapack_directly = clock();
     LAPACK_dsyev(&JOBS, &UPLO, &N, A, &LDA, &W[0],&WORK[0],&LWORK, &INFO);
     double end_time_lapack_directly = clock();
 
@@ -199,38 +199,32 @@ void Diagonalization::using_armadillo()
     if(given.sectorbool==true)          N = given.number_of_hits; // Should do something so that this if-test is not neccessary
     else                                N = given.no_of_states;
 
-    double start_time_arma = clock();        // If I want to take the time
+
     eigenvalues_armadillo = arma::vec(N);
     eigenvectors_armadillo = arma::mat(N,N);
 
     //string method = "std";
+    double start_time_arma = clock();        // If I want to take the time
     arma::eig_sym(eigenvalues_armadillo,eigenvectors_armadillo, given.armaH);
     double end_time_arma = clock();
     armatime = (end_time_arma - start_time_arma)/CLOCKS_PER_SEC;
 }
 
+
 void Diagonalization::print_using_armadillo()
 {
-    //for(int i= 0; i<N; i++)
-    //{
-    //    cout << "Eigenvalue = " << eigenvalues_armadillo(i) << endl;
-    //    cout << "Its corresponding eigenvector:" << endl;
-    //    for(int j=0; j<N; j++)       cout << eigenvectors_armadillo(j,i) << " ";
-    //    cout << endl;
-    //}   // End for-loop over i
+    for(int i= 0; i<N; i++)
+    {
+        cout << "Eigenvalue = " << eigenvalues_armadillo(i) << endl;
+        cout << "Its corresponding eigenvector:" << endl;
+        for(int j=0; j<N; j++)       cout << eigenvectors_armadillo(j,i) << " ";
+        cout << endl;
+    }   // End for-loop over i
 
     cout << "Eigenvalues = " << eigenvalues_armadillo << endl;
-    //cout << "Eigenvectors : " << endl << eigenvectors_armadillo << endl;
+    cout << "Eigenvectors : " << endl << eigenvectors_armadillo << endl;
 }
 
-void Diagonalization::print_sparse_Eigen()
-{
-    // See if i can find something a bit more clever...
-    cout << given.sparseH << endl;
-}
-
-
-// Here is the danger zone!
 
 void Diagonalization::using_dense_eigen()
 {

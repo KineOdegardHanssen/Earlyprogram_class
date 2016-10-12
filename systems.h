@@ -7,7 +7,7 @@
 //#include <random>    // Need this or something like it
 //#include <complex>   // But not this
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
+//#include <Eigen/Sparse>
 #include <Eigen/QR> 
 #include <Eigen/Eigenvalues>
 
@@ -20,26 +20,20 @@ public:
     int systemsize, number_of_hits, no_of_states, mysector;
     double h, J;
 
-    bool dense, palhuse, sectorbool, armadillobool, testupip1downi, testdownip1upi;
+    bool palhuse, sectorbool, armadillobool, testupip1downi, testdownip1upi;
 
     vector<double> hs;
     vector<int> sectorlist;
-    typedef Eigen::Triplet<double> T;
 
     // For armadillo solvers        // Okay, the program flow certainly is awkward...
     arma::mat armaH;
 
     // For Eigen solvers
-    Eigen::Triplet<double> currentTriplet;
-    vector< Eigen::Triplet<double> > tripletList; // Fetched this from the Eigen website
-    Eigen::SparseMatrix<double> sparseH;          // Or get this from systems?
-
     Eigen::MatrixXd eigenH;
 
     // Initializer
     Systems();
     Systems(int systemsize, double J, double h, bool armadillobool);
-    Systems(int systemsize, double J, double h, bool armadillobool, bool dense);
 
     void set_mysector(int mysector);
     void change_system(double h);
@@ -67,7 +61,6 @@ public:
     void checktestupdown(int j, int i);
     void sector0();
     void sector1_2();          // Odd name, perhaps...
-    void find_sector_sparse();
     void find_sector_dense();
     void trim_sectorlist();
 
@@ -83,9 +76,7 @@ public:
     void palhuse_set_elements(int i, int b);
     // Sector Hamiltonians
     void palhuse_interacting_sectorHamiltonian_dense();   // Merge these?
-    void palhuse_interacting_sectorHamiltonian_sparse();  //
     void palhuse_random_sectorHamiltonian_dense();        // Don't need these?
-    void palhuse_random_sectorHamiltonian_sparse();       //
     void palhuse_diagonal_sectorHamiltonian();
 
     // Total Hamiltonians

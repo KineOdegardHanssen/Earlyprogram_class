@@ -5,7 +5,7 @@
 #include <armadillo>
 //#include <random>             // Just leaving this out for now...
 #include <Eigen/Dense>
-#include <Eigen/Sparse>
+//#include <Eigen/Sparse>
 #include <Eigen/QR>
 #include <Eigen/Eigenvalues>
 
@@ -23,32 +23,16 @@ Systems::Systems(int systemsize, double J, double h, bool armadillobool)
     this->J=J;
     this->h=h;
     hs = vector<double>(no_of_states);
-    this->dense = false;
     this->armadillobool = armadillobool;
     palhuse = true;                               // Default setting
     //randomize();
-}
-
-Systems::Systems(int systemsize, double J, double h, bool armadillobool, bool dense)
-{
-    this->systemsize = systemsize;
-    this->no_of_states = pow(2, systemsize);
-    this->J = J;
-    this->h = h;
-    hs = vector<double>(no_of_states);
-    this->dense = dense;
-    this->armadillobool = armadillobool;
-    palhuse = true;                               // Default setting
-    //randomize();
-
 }
 
 
 void Systems::set_mysector(int mysector)
 {
     this->mysector = mysector;
-    if(dense==true)    find_sector_dense();
-    else               find_sector_sparse();
+    find_sector_dense();
 }
 
 void Systems::change_system(double h)
@@ -57,11 +41,6 @@ void Systems::change_system(double h)
     number_of_hits = 0;
     this->h = h;
     randomize();
-    // Removing the diagonal entries in tripleList, as these contain the dependence of the h's
-    if(dense==false)    for(unsigned int i=0; i<no_of_states; i++)        tripletList.pop_back();
-    // Because the diagonal part of the matrix is always set last.
-    // Using dense armadillo matrices, these are just overwritten.
-    // That may not be the case for dense matrices using Eigen.
 }
 
 void Systems::change_system(double h, double J)
@@ -70,12 +49,6 @@ void Systems::change_system(double h, double J)
     number_of_hits = 0;
     this->h = h;
     this->J= J;
-    if(dense==false)
-    {
-        while(tripletList.empty()==false)     tripletList.pop_back();   // Resetting tripletList
-        // Maybe find a more effective way to do this? Just declare it again?
-        // Don't think I will actually use this function.
-    }
 }
 
 void Systems::create_armadillo_matrix()
@@ -91,10 +64,12 @@ void Systems::create_armadillo_matrix()
 void Systems::create_armadillo_matrix(int size)
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
     armaH = arma::mat(size, size);
+    /*
     for(int i=0; i<size; i++)
     {
         for(int j=0; j<size; j++)    armaH(i,j)= 0.0;
     }
+    */
     //cout << "Arma matrix set. Max index no = " << size-1 << endl;
 }
 
@@ -116,10 +91,12 @@ void Systems::create_dense_Eigen_matrix(int size)
     //const bool TRACE = false;
     //if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(size, size);
+    /*
     for(int i=0; i<size; i++)
     {
         for(int j=0; j<size; j++)    eigenH(i,j)= 0.0;
     }
+    */
     //cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
 }
 
@@ -232,9 +209,7 @@ void Systems::sector0()
     if(systemsize%2==0)
     {
         mysector = systemsize/2;
-
-        if(dense==true)        find_sector_dense();  // Change these commands.
-        else                   find_sector_sparse();
+        find_sector_dense();  // Change these commands.
     }
     else    cout << "A system of an odd no. of particles have no S_tot = 0 states. Try another sector." << endl;
 }
@@ -244,28 +219,11 @@ void Systems::sector1_2()
     if(systemsize%2==1)
     {
         mysector = (systemsize+1)/2;
-
-        if(dense==true)        find_sector_dense();  // Change these commands.
-        else                   find_sector_sparse();
+        find_sector_dense();  // Change these commands.
     }
     else    cout << "A system of an even no. of particles have no S_tot = 1/2 states. Try another sector." << endl;
 }
 
-void Systems::find_sector_sparse()
-{   // Should append to some list in some way... Armadillo? Eigen? Eigen.
-    //int number = 0;
-    sectorbool = true;
-    number_of_hits = 0;
-    sectorlist = vector<int>(no_of_states);
-    for(int state=0; state<no_of_states; state++)
-    {
-        if(number_of_up(state)==mysector) // Well, something... Append to some list
-        {
-            number_of_hits ++;
-            sectorlist[state] = number_of_hits;
-        } // End if
-    } // End while
-}
 
 void Systems::find_sector_dense()
 {   // Should keep some information on what states are in the list. Well, that is all in sectorlist.
@@ -364,24 +322,16 @@ void Systems::palhuse_set_elements(int i, int b)
     if(systemsize == 2)        element = J;  // Special case. BCs and small
     else                       element = 0.5*J;
 
-    if(dense==false)
+    if(armadillobool == true)
     {
-        if(systemsize == 2)             currentTriplet = T(index1,index2,0.5*element); // ... ?
-        else                            currentTriplet = T(index1,index2,element);
-        tripletList.push_back(currentTriplet);
+        armaH(index1,index2) = element;
+        armaH(index2,index1) = element;
     }
     else
     {
-        if(armadillobool == true)
-        {
-            armaH(index1,index2) = element;
-            armaH(index2,index1) = element;
-        }  // End if-test dense
-        else   // Maybe set a Eigenbool sometime also?
-        {  // Check if this returns the correct result
-            eigenH(index1, index2) = element;
-            eigenH(index2, index1) = element;
-        }
+        eigenH(index1, index2) = element;
+        eigenH(index2, index1) = element;
+
     }
 }
 //----------------------------------------SECTOR HAMILTONIANS---------------------------------------------//
@@ -426,41 +376,6 @@ void Systems::palhuse_interacting_sectorHamiltonian_dense()
     if(TRACE)    cout << "Exiting palhuse_interacting_sectorHamiltonian" << endl;
 }
 
-
-
-void Systems::palhuse_interacting_sectorHamiltonian_sparse()
-{
-    // The Hamiltonian is hermittian, i.e. symmetric about the diagonal, so we need not change the indices.
-    int length = number_of_hits << 3;
-
-    currentTriplet = T(0,0,0);
-    tripletList.reserve(length);     // Is this too big?
-
-    int a = 0;
-    int b = 0;
-
-    for(int i=0; i<no_of_states; i++)  // This is excessive, but whatever...
-    {   // Should I include a while loop, or something?
-        a = sectorlist[i];  // Get no contribution from the zero elements, but they do steal computation time
-        // spi1psmi, upip1downi
-        for(int j=0; j<systemsize; j++)
-        {           
-            checktestupdown(j,a);
-            if(testupip1downi==true)
-            {
-                b = upip1downi(j, a);
-                set_elements(a,b);
-            }
-            if(testdownip1upi==true)
-            {
-                b = downip1upi(j, a);
-                set_elements(a,b);
-            }
-        } // End for j
-    } // End for i
-}
-
-
 void Systems::palhuse_diagonal_sectorHamiltonian()
 {
     const bool TRACE = false;
@@ -472,13 +387,8 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
         element = 0;
         int a = sectorlist[i];
         for(int j=0; j<systemsize; j++)  element += hs[j]*szi(j, a) + J*szip1szi(j,a);
-        if(dense==false)
-        {
-            currentTriplet = T(i,i,element);
-            tripletList.push_back(currentTriplet);
-        }
-        else if((dense==true) && (armadillobool == true))                       armaH(i,i) = element;
-        else if((dense==true) && (armadillobool == false))                      eigenH(i,i) = element;
+        if(armadillobool == true)                            armaH(i,i) = element;
+        else if(armadillobool == false)                      eigenH(i,i) = element;
     } // End for-loop over i
     if(TRACE)    cout << "Exiting palhuse_diagonal_sectorHamiltonian" << endl;
 } // End function palhuse_random_sectorHamiltonian_dense
@@ -487,11 +397,6 @@ void Systems::palhuse_diagonal_sectorHamiltonian()
 
 void Systems::palhuse_interacting_totalHamiltonian()
 {
-    int length = no_of_states << 3;
-
-    currentTriplet = T(0,0,0);
-    tripletList.reserve(length);     // Is this too big?
-
     if(armadillobool)                                               create_armadillo_matrix();
     if(armadillobool==false)                                        create_dense_Eigen_matrix();
     sectorbool=false;
@@ -530,16 +435,8 @@ void Systems::palhuse_diagonal_totalHamiltonian()
         // The 2-particle case is special again...
         for(int j=0; j<systemsize; j++)  element += hs[j]*szi(j, i) + J*szip1szi(j,i);
         index = no_of_states - (i+1);
-        currentTriplet = T(index,index,element);
-        tripletList.push_back(currentTriplet);
-
-        if((dense==true) && (armadillobool==true))                            armaH(index,index) = element;
-        else if((dense==true) && (armadillobool==false))                      eigenH(index,index) = element;
-        else if(dense==false)
-        {
-            sparseH = Eigen::SparseMatrix<double>(no_of_states, no_of_states);
-        }
+        if(armadillobool==true)                            armaH(index,index) = element;
+        else if(armadillobool==false)                      eigenH(index,index) = element;
     } // End for-loop over i
-    if(dense==false)             sparseH.setFromTriplets(tripletList.begin(), tripletList.end());
-    if((dense==true) && (armadillobool==false))    eigenH.cast<double>();
+    if(armadillobool==false)                                                  eigenH.cast<double>();
 } // End function palhuse_random_sectorHamiltonian_dense

@@ -5,31 +5,30 @@
 
 using namespace std;
 
-void system_total_hom(int systemsize, double h, double J, bool densebool);
-void system_sector0_hom(int systemsize, double h, double J, bool densebool);
-void system_sector1_2_hom(int systemsize, double h, double J, bool densebool);
+void system_total_hom(int systemsize, double h, double J);
+void system_sector0_hom(int systemsize, double h, double J);
+void system_sector1_2_hom(int systemsize, double h, double J);
 
 int main()
 {       
     const bool TRACE = false;
-    int systemsize = 5;
+    int systemsize = 15;
     double J = 1;
     double h = 1;
     //bool armabool = false;
-    bool densebool = true;
 
     if(TRACE)    cout << "Well, at least I made it to main..." << endl;
 
-    //system_total_hom(systemsize, h, J, densebool);
-    //system_sector0_hom(systemsize, h, J, densebool);
-    system_sector1_2_hom(systemsize, h, J, densebool);
+    //system_total_hom(systemsize, h, J);
+    //system_sector0_hom(systemsize, h, J);
+    system_sector1_2_hom(systemsize, h, J);
 
 }
 
-void system_total_hom(int systemsize, double h, double J, bool densebool)
+void system_total_hom(int systemsize, double h, double J)
 {
     bool armabool = true;
-    Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem = Systems(systemsize, J, h, armabool);
 
     double set_system_start1 = clock();
     testsystem.set_hs_hom();
@@ -44,15 +43,29 @@ void system_total_hom(int systemsize, double h, double J, bool densebool)
         for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
         cout << endl;
     }
+    cout << endl << endl;
     */
 
+    cout << "Suspiciously small non-zero armadillo elements:" << endl;
+    double ay;
+    for(int i=0; i<testsystem.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem.number_of_hits; j++)
+        {
+            ay = testsystem.armaH(i,j);
+            if(ay!=0 && abs(ay)<0.25)            cout << "Element non-zero: " << ay  << endl;
+        }
+
+    }
+   cout << endl;
+    /*
     Diagonalization giveit = Diagonalization(testsystem);
     giveit.using_armadillo();
     giveit.print_using_armadillo();
-
+    */
 
     armabool = false;
-    Systems testsystem2 = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem2 = Systems(systemsize, J, h, armabool);
 
     double set_system_start2 = clock();
     testsystem2.set_hs_hom();
@@ -61,6 +74,30 @@ void system_total_hom(int systemsize, double h, double J, bool densebool)
     double set_system_end2 = clock();
     double set_system_time2 = (set_system_end2 - set_system_start2)/CLOCKS_PER_SEC;
 
+    /*
+    for(int i=0; i<testsystem.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem2.eigenH(i,j) << " ";
+        cout << endl;
+    }
+    */
+
+    cout << "Suspiciously small non-zero Eigen elements:" << endl;
+    for(int i=0; i<testsystem.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem.number_of_hits; j++)
+        {
+            ay = testsystem2.eigenH(i,j);
+            if(ay!=0 && abs(ay)<0.25)            cout << "Element non-zero: " << ay  << endl;
+        }
+
+    }
+   cout << endl;
+
+    cout << "Time needed to create the matrix with armadillo: " << set_system_time1 << endl;
+    cout << "Time needed to create the matrix with Eigen: " << set_system_time2 << endl;
+
+    /*
     Diagonalization giveit2 = Diagonalization(testsystem2);
     giveit2.print_dense_using_eigen();
 
@@ -71,14 +108,15 @@ void system_total_hom(int systemsize, double h, double J, bool densebool)
     cout << "Computation time using armadillo: " << giveit.armatime << endl;
     cout << "Computation time using Eigen: " << giveit2.eigen_time << endl;
     cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
+    */
 }
 
 
-void system_sector0_hom(int systemsize, double h, double J, bool densebool)
+void system_sector0_hom(int systemsize, double h, double J)
 {
 
     bool armabool = true;
-    Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem = Systems(systemsize, J, h, armabool);
 
     double set_system_start1 = clock();
     testsystem.set_hs_hom();
@@ -88,20 +126,13 @@ void system_sector0_hom(int systemsize, double h, double J, bool densebool)
     double set_system_end1 = clock();
     double set_system_time1 = (set_system_end1 - set_system_start1)/CLOCKS_PER_SEC;
 
-    /*
-    for(int i=0; i<testsystem.number_of_hits; i++)
-    {
-        for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
-        cout << endl;
-    }
-    */
 
     Diagonalization giveit = Diagonalization(testsystem);
     giveit.using_armadillo();
     giveit.print_using_armadillo();
 
     armabool = false;
-    Systems testsystem2 = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem2 = Systems(systemsize, J, h, armabool);
 
     double set_system_start2 = clock();
     testsystem2.set_hs_hom();
@@ -125,10 +156,10 @@ void system_sector0_hom(int systemsize, double h, double J, bool densebool)
 
 }
 
-void system_sector1_2_hom(int systemsize, double h, double J, bool densebool)
+void system_sector1_2_hom(int systemsize, double h, double J)
 {
     bool armabool = true;
-    Systems testsystem = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem = Systems(systemsize, J, h, armabool);
 
     double set_system_start1 = clock();
     testsystem.set_hs_hom();
@@ -145,14 +176,28 @@ void system_sector1_2_hom(int systemsize, double h, double J, bool densebool)
         for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
         cout << endl;
     }
-    */
+
 
     Diagonalization giveit = Diagonalization(testsystem);
     giveit.using_armadillo();
     giveit.print_using_armadillo();
+    */
+
+    cout << "Suspiciously small non-zero armadillo elements:" << endl;
+    double ay;
+    for(int i=0; i<testsystem.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem.number_of_hits; j++)
+        {
+            ay = testsystem.armaH(i,j);
+            if(ay!=0 && abs(ay)<0.25)            cout << "Element non-zero: " << ay  << endl;
+        }
+
+    }
+   cout << endl;
 
     armabool = false;
-    Systems testsystem2 = Systems(systemsize, J, h, armabool, densebool);
+    Systems testsystem2 = Systems(systemsize, J, h, armabool);
 
     double set_system_start2 = clock();
     testsystem2.set_hs_hom();
@@ -163,17 +208,30 @@ void system_sector1_2_hom(int systemsize, double h, double J, bool densebool)
     double set_system_end2 = clock();
     double set_system_time2 = (set_system_end2 - set_system_start2)/CLOCKS_PER_SEC;
 
-    Diagonalization giveit2 = Diagonalization(testsystem2);
-    giveit2.print_dense_using_eigen();
+    cout << "Suspiciously small non-zero Eigen elements:" << endl;
+    for(int i=0; i<testsystem2.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem2.number_of_hits; j++)
+        {
+            ay = testsystem2.eigenH(i,j);
+            if(ay!=0 && abs(ay)<0.25)            cout << "Element non-zero: " << ay  << endl;
+        }
 
-    giveit2.lapack_directly();
+    }
+   cout << endl;
+
+    //Diagonalization giveit2 = Diagonalization(testsystem2);
+    //giveit2.print_dense_using_eigen();
+
+    //giveit2.lapack_directly();
 
     cout << "Time needed to create the matrix with armadillo: " << set_system_time1 << endl;
     cout << "Time needed to create the matrix with Eigen: " << set_system_time2 << endl;
-    cout << "Computation time using armadillo: " << giveit.armatime << endl;
-    cout << "Computation time using Eigen: " << giveit2.eigen_time << endl;
-    cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
+    //cout << "Computation time using armadillo: " << giveit.armatime << endl;
+    //cout << "Computation time using Eigen: " << giveit2.eigen_time << endl;
+    //cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
 
+    /*
     //Eigen::VectorXd ev_diff(testsystem.number_of_hits);
     double average = 0;
     double thediff = 0;
@@ -194,4 +252,5 @@ void system_sector1_2_hom(int systemsize, double h, double J, bool densebool)
     cout << "Number of eigenvalues where armadillo and LAPACK differed:" << no_not_zero << endl;
     cout << "Total number of eigenvalues: " << testsystem.number_of_hits << endl;
     cout << "Percent of eigenvalues not exactly equal: " << (100*no_not_zero/testsystem.number_of_hits) << endl;
+    */
 }
