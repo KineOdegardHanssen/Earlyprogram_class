@@ -86,10 +86,6 @@ void Quantities::newtonsmethod(double eigenvalue)
         betaattempt -= fbetan/self_consistency_beta_derivative(eigenvalue, betatest);
         diff = abs(fbetan);
         i++;
-        //if(i == maxit) cout<< "NB! Max no. of iterations exceeded in newtonsmethod. Diff="<< diff << endl;
-        //prevprevdiff = prevdiff;
-        //prevdiff = diff;
-        //if(abs(prevprevdiff - diff) < 1e-15)  break; // To prevent the program from bouncing back and forth
     }
     beta = betaattempt;    // Is setting beta this way really the wisest?
 }
@@ -169,10 +165,6 @@ void Quantities::newtonsmethod_arma(double eigenvalue)
         betaattempt -= fbetan/self_consistency_beta_derivative_a(eigenvalue, betatest);
         diff = abs(fbetan);
         i++;
-        //if(i == maxit) cout<< "NB! Max no. of iterations exceeded in newtonsmethod. Diff="<< diff << endl;
-        //prevprevdiff = prevdiff;
-        //prevdiff = diff;
-        //if(abs(prevprevdiff - diff) < 1e-15)  break; // To prevent the program from bouncing back and forth
     }
     beta = betaattempt;    // Is setting beta this way really the wisest?
 }
@@ -355,9 +347,8 @@ Eigen::MatrixXd Quantities::thermalmat_Eigen()
      {
          for(int i=0; i<N; i++)
          {
-             eigmatik = eigmat_a(i,k);  // 'Cause, getting the element each time is a bit tiring? Not important FLOPs, though...
-             cout << "i: " << i <<"eigmatii: " << eigmatik << endl;
-             for(int j=0; j<N; j++)    A(i,j) += Zf*exp(beta*(min_ev-eigvals_a(k)))*eigmatik*eigmat_a(j,k);   // Double check that this is correct. Think so since the eigenvectors in eigmat are stored as column vectors.
+             eigmatik = eigmat(i,k);  // 'Cause, getting the element each time is a bit tiring? Not important FLOPs, though...
+             for(int j=0; j<N; j++)    A(i,j) += Zf*exp(beta*(min_ev-eigvals(k)))*eigmatik*eigmat(j,k);   // Double check that this is correct. Think so since the eigenvectors in eigmat are stored as column vectors.
          }
      }
      return A;
@@ -375,35 +366,6 @@ Eigen::MatrixXd Quantities::eigenstatemat_Eigen(int i)
 }
 
 //----------------------------------------/USING ARMADILLO/-----------------------------------------------//
-/*
-arma::mat Quantities::trace_arma(arma::mat A)
-{
-    // Include an if-test
-    int traceN = N >> 1; // This works for the whole matrix only. Not quite sure what will happen for sectors.
-    int n = N-1; // because the counting in Maziero was different.
-    arma::mat trace_matrix(traceN, traceN);  // Should I set all elements to zero?
-    int index1, index2;
-    for(int k=0; k<traceN; k++)   // If neccessary
-    {
-        for(int l=0; l<traceN; l++)    trace_matrix(k,l) = 0.0;
-    }
-
-    for(int k=0; k<traceN; k++)
-    {
-        for(int l=0; l<traceN; l++)
-        {
-            for(int j=0; j<N; j++)
-            {
-                index1 = abs((k-1)*n+j);  // Well, so maybe this isn't a good way to take the trace...
-                index2 = abs((l-1)*n+j);
-                //cout << "Index1: " << index1 << "; Index2: " << index2 << endl;
-                trace_matrix(k,l) += A(index1,index2);
-            }
-        }
-    }
-    return trace_matrix;
-}
-*/
 
 arma::mat Quantities::trace_arma(arma::mat A)  // Should I just do armadillo instead?
 {
@@ -428,13 +390,11 @@ arma::mat Quantities::thermalmat_arma()
     {
         for(int j=0; j<N; j++)    A(i,j) = 0.0;   // See if this helps
     }
-    cout << "And now, I have set A" << endl;
     for(int k=0; k<N; k++)
     {
         for(int i=0; i<N; i++)
         {
             eigmatki = eigmat_a(i,k);  // 'Cause, getting the element each time is a bit tiring? Not important FLOPs, though...
-            cout << "i: " << i <<"eigmatii: " << eigmatki << endl;
             for(int j=0; j<N; j++)    A(i,j) += Zf*exp(beta*(min_ev-eigvals_a(k)))*eigmatki*eigmat_a(j,k);   // Double check that this is correct. Think so since the eigenvectors in eigmat are stored as column vectors.
         }
     }
