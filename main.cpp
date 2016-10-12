@@ -14,7 +14,7 @@ void system_sector1_2_hom(int systemsize, double h, double J);
 int main()
 {       
     const bool TRACE = false;
-    int systemsize = 2;
+    int systemsize = 5;
     int maxit = 1e7;
     double J = 1;
     double h = 1;
@@ -25,10 +25,10 @@ int main()
 
     //system_total_hom(systemsize, h, J);
     //system_sector0_hom(systemsize, h, J);
-    //system_sector1_2_hom(systemsize, h, J);
+    system_sector1_2_hom(systemsize, h, J);
 
-    Running runit = Running(systemsize, maxit, h, J, tolerance, armabool);
-    runit.homogenous_field(systemsize, h, J);  // Should I change this call?
+    //Running runit = Running(systemsize, maxit, h, J, tolerance, armabool);
+    //runit.homogenous_field(systemsize, h, J);  // Should I change this call?
 }
 
 void system_total_hom(int systemsize, double h, double J)
@@ -159,7 +159,12 @@ void system_sector0_hom(int systemsize, double h, double J)
     cout << "Computation time using Eigen: " << giveit2.eigen_time << endl;
     cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
 
-
+    cout << "sectorlist using arma: " << endl;
+    for(int i=0; i<testsystem.number_of_hits; i++)        cout << testsystem.sectorlist[i] << "   ";
+    cout << endl;
+    cout << "sectorlist using Eigen: ";
+    for(int i=0; i<testsystem.number_of_hits; i++)        cout << testsystem2.sectorlist[i] << "   ";
+    cout << endl;
 }
 
 void system_sector1_2_hom(int systemsize, double h, double J)
@@ -176,19 +181,18 @@ void system_sector1_2_hom(int systemsize, double h, double J)
     double set_system_end1 = clock();
     double set_system_time1 = (set_system_end1 - set_system_start1)/CLOCKS_PER_SEC;
 
+    Diagonalization giveit = Diagonalization(testsystem);
+    giveit.using_armadillo();
+    giveit.print_using_armadillo();
     /*
     for(int i=0; i<testsystem.number_of_hits; i++)
     {
         for(int j=0; j<testsystem.number_of_hits; j++)    cout << testsystem.armaH(i,j) << " ";
         cout << endl;
     }
-
-
-    Diagonalization giveit = Diagonalization(testsystem);
-    giveit.using_armadillo();
-    giveit.print_using_armadillo();
     */
 
+    /*
     cout << "Suspiciously small non-zero armadillo elements:" << endl;
     double ay;
     for(int i=0; i<testsystem.number_of_hits; i++)
@@ -201,6 +205,7 @@ void system_sector1_2_hom(int systemsize, double h, double J)
 
     }
    cout << endl;
+   */
 
     armabool = false;
     Systems testsystem2 = Systems(systemsize, J, h, armabool);
@@ -214,6 +219,14 @@ void system_sector1_2_hom(int systemsize, double h, double J)
     double set_system_end2 = clock();
     double set_system_time2 = (set_system_end2 - set_system_start2)/CLOCKS_PER_SEC;
 
+    /*
+    for(int i=0; i<testsystem2.number_of_hits; i++)
+    {
+        for(int j=0; j<testsystem2.number_of_hits; j++)    cout << testsystem2.eigenH(i,j) << " ";
+        cout << endl;
+    }
+
+
     cout << "Suspiciously small non-zero Eigen elements:" << endl;
     for(int i=0; i<testsystem2.number_of_hits; i++)
     {
@@ -225,17 +238,25 @@ void system_sector1_2_hom(int systemsize, double h, double J)
 
     }
    cout << endl;
+   */
 
-    //Diagonalization giveit2 = Diagonalization(testsystem2);
+    Diagonalization giveit2 = Diagonalization(testsystem2);
     //giveit2.print_dense_using_eigen();
 
-    //giveit2.lapack_directly();
+    giveit2.lapack_directly();
 
     cout << "Time needed to create the matrix with armadillo: " << set_system_time1 << endl;
     cout << "Time needed to create the matrix with Eigen: " << set_system_time2 << endl;
     //cout << "Computation time using armadillo: " << giveit.armatime << endl;
     //cout << "Computation time using Eigen: " << giveit2.eigen_time << endl;
     //cout << "Computation time using lapack directly: " << giveit2.lapacktime << endl;
+
+    cout << "sectorlist using arma: " << endl;
+    for(int i=0; i<testsystem.number_of_hits; i++)        cout << testsystem.sectorlist[i] << "   ";
+    cout << endl;
+    cout << "sectorlist using Eigen: ";
+    for(int i=0; i<testsystem.number_of_hits; i++)        cout << testsystem2.sectorlist[i] << "   ";
+    cout << endl;
 
     /*
     //Eigen::VectorXd ev_diff(testsystem.number_of_hits);

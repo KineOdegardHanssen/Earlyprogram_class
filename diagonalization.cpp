@@ -183,7 +183,7 @@ void Diagonalization::lapack_directly()
     //eigenmatrix_H(A, N, N);
 
     //cout << "After using the Map function in Eigen: " << endl;
-    //cout << B << endl;
+    cout << B << endl;
 
     if(TRACE)    cout << "Everything should be running just fine" << endl;
 
