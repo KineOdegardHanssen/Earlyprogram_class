@@ -64,12 +64,10 @@ void Systems::create_armadillo_matrix()
 void Systems::create_armadillo_matrix(int size)
 {   // Creates an empty matrix, ready to use, in those cases where it is not too big.
     armaH = arma::mat(size, size);
-    /*
-    for(int i=0; i<size; i++)
+    for(int i=0; i<size; i++)        // This does not seem to be neccessary all the time, but it is safer.
     {
         for(int j=0; j<size; j++)    armaH(i,j)= 0.0;
     }
-    */
     //cout << "Arma matrix set. Max index no = " << size-1 << endl;
 }
 
@@ -91,12 +89,10 @@ void Systems::create_dense_Eigen_matrix(int size)
     //const bool TRACE = false;
     //if(TRACE)    cout << "I am going to set the size of an eigenmatrix" << endl;
     eigenH = Eigen::MatrixXd(size, size);
-    /*
     for(int i=0; i<size; i++)
     {
         for(int j=0; j<size; j++)    eigenH(i,j)= 0.0;
     }
-    */
     //cout << "Eigen matrix set. Max index no. = " << size-1 << endl;
 }
 

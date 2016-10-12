@@ -33,7 +33,7 @@ void Running::homogenous_field(int systemsize, double h, double J)
     if(armadillobool)
     {
         eig_all.using_armadillo();
-        //diag.print_using_armadillo();
+        //eig_all.print_using_armadillo();
     }
     else
     {
@@ -41,10 +41,17 @@ void Running::homogenous_field(int systemsize, double h, double J)
     }
 
     Quantities quants = Quantities(maxit, tolerance, armadillobool, system, eig_all);
-    for(int i=quants.li; i<=quants.lh; i++)   // Something is wrong here
+    /*
+    for(int i=0; i<quants.N; i++)
     {
         cout << "Eigenvalue no." << i << "; Abs. diff. between first matrix elements: " << quants.ETH(i) << endl;
     }
+    */
+    for(int i=quants.li; i<quants.lh; i++)   // Something is wrong here. Maybe.
+    {
+        cout << "Eigenvalue no." << i << "; Abs. diff. between first matrix elements: " << quants.ETH(i) << endl;
+    }
+
 }
 
 

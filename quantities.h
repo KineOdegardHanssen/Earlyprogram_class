@@ -43,6 +43,7 @@ public:
     void sort_energies();
     int signcompare(double fa, double fc);
     void calculateZ();
+    void calculateZ_arma();
 
     // Finding beta
     // To be run for each eigenstate/eigenvalue
