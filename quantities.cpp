@@ -274,6 +274,42 @@ double Quantities::ETH_arma(int i)         // Or should I return a list of doubl
     return diff_elem;
 }
 
+double Quantities::ETH_arma_maziero(int i)         // Or should I return a list of doubles, so I have more flexibility regarding which quantity to use
+{
+    int j = 0;
+    //newtonsmethod_arma(eigvals_a(i));   // Or should I call the bisection method? // newtonsmethod works, but is incredibly slow...
+    //cout << "newtonsmethod_arma run" << endl;
+    beta = 0; // Incorrect, but want to focus on removing any errors for now.
+    arma::mat thm = thermalmat_arma();
+    arma::mat esm = eigenstatemat_arma(i);
+    cout << "The density matrix is:" << endl;
+    cout << esm << endl << endl;
+    cout << "The thermal matrix is: " << endl;
+    cout << thm << endl << endl;
+
+    // Trace procedures: Should we trace over all spins except our state?
+    //int Nnext = N;
+    while(j<(systemsize-1)) // Want to trace over all particles except one
+    {
+        thm = trace_arma_maziero(thm);  // Should I declare it again, or just let it stand like this?
+        esm = trace_arma_maziero(esm);
+        j++;
+    }
+    cout << "Reduced thermal matrix: " << endl;
+    cout << thm << endl << endl;
+    cout << "Reduced density matrix: " << endl;
+    cout << esm << endl << endl;
+    arma::mat diff_mat = thm - esm;
+    cout << "matrix diff_mat created" << endl;
+    double diff_elem = diff_mat(0,0);   // Difference between the first elements
+    //double diff_norm_frob = norm(diff_mat, "fro"); // Frobenius norm
+    //double diff_norm_maxsumrow = norm(diff_mat, "inf");
+    //double diff_norm_maxsumcol = norm(diff_mat, 1);
+
+    // Do something with some of these
+    return diff_elem;
+}
+
 double Quantities::ETH_Eigen(int i)
 {
     int j=0;
@@ -294,13 +330,34 @@ double Quantities::ETH_Eigen(int i)
     return diff_elem;
 }
 
+double Quantities::ETH_Eigen_maziero(int i)
+{
+    int j=0;
+    newtonsmethod(eigvals(i));
+    Eigen::MatrixXd thm = thermalmat_Eigen();
+    Eigen::MatrixXd esm = eigenstatemat_Eigen(i);
+    // Trace procedures: Should we trace over all spins except our state?
+    while(j<(systemsize-1)) // Want to trace over all particles except one
+    {
+        thm = trace_Eigen_maziero(thm);  // Should I declare it again, or just let it stand like this?
+        esm = trace_Eigen_maziero(esm);
+        j++;
+    }
+    Eigen::MatrixXd diff_mat = thm - esm;
+    double diff_elem = diff_mat(0,0);   // Difference between the first elements
+    //double diff_norm_frob = Eigen::MatrixBase<Eigen::MatrixXd>::norm(diff_mat);   // The Frobenius norm
+
+    return diff_elem;
+}
+
 //-------------------------------------------/USING EIGEN/------------------------------------------------//
-/*
-Eigen::MatrixXd Quantities::trace_Eigen(Eigen::MatrixXd A)  // Should I just do armadillo instead?
+
+Eigen::MatrixXd Quantities::trace_Eigen_maziero(Eigen::MatrixXd A)
 {
     // Include an if-test
-    int traceN = N >> 1; // This works for the whole matrix only. Not quite sure what will happen for sectors.
+    int traceN = N >> 1;                           // This works for the whole matrix only. Not quite sure what will happen for sectors.
     Eigen::MatrixXd trace_matrix(traceN, traceN);  // Should I set all elements to zero?
+    int db = 2;                                    // Because we only trace over one particle. The Hilbert space is of dim 2 (spin up and down).
     for(int k=0; k<traceN; k++)
     {
         for(int l=0; l<traceN; l++)    trace_matrix(k,l) = 0.0;
@@ -310,17 +367,17 @@ Eigen::MatrixXd Quantities::trace_Eigen(Eigen::MatrixXd A)  // Should I just do 
     {
         for(int l=0; l<traceN; l++)
         {
-            for(int j=0; j<N; j++)
+            for(int j=0; j<db; j++)
             {
-                index1 = (k-1)*N+j;
-                index2 = (l-1)*N+j;
+                index1 = k*2+j;
+                index2 = l*2+j;
                 trace_matrix(k,l) += A(index1,index2);
             }
         }
     }
     return trace_matrix;
 }
-*/
+
 
 Eigen::MatrixXd Quantities::trace_Eigen(Eigen::MatrixXd A)  // Should I just do armadillo instead?
 {
@@ -378,6 +435,39 @@ arma::mat Quantities::trace_arma(arma::mat A)  // Should I just do armadillo ins
     }
     return trace_matrix;
 }
+
+/* */
+arma::mat Quantities::trace_arma_maziero(arma::mat A)
+{
+    // Include an if-test
+    int traceN = N >> 1; // This works for the whole matrix only. Not quite sure what will happen for sectors.
+    int db = 2; // Tracing over one particle. The dimension of the Hilbert space is then 2 (spin up/spin down).
+    arma::mat trace_matrix(traceN, traceN);
+    int index1, index2;
+    for(int k=0; k<traceN; k++)
+    {
+        for(int l=0; l<traceN; l++)
+        {
+            trace_matrix(k,l) = 0.0;
+        }
+    }
+    for(int k=0; k<traceN; k++)
+    {
+        for(int l=0; l<traceN; l++)
+        {
+            for(int j=0; j<db; j++)
+            {
+                index1 = k*db+j;
+                index2 = l*db+j;
+                cout << "k = " << k << "; l = " << l <<  "Index1: " << index1 << "; Index2: " << index2 << endl;
+                trace_matrix(k,l) +=A(index1,index2);
+            }
+        }
+    }
+    cout << "I'm done setting the trace according to Maziero" << endl;
+    return trace_matrix;
+}
+
 
 arma::mat Quantities::thermalmat_arma()
 {

@@ -61,15 +61,19 @@ public:
     // Eigenstate Thermalization Hypothesis
     double ETH(int i);       // Should this really be a void?
     double ETH_arma(int i);
+    double ETH_arma_maziero(int i);
     double ETH_Eigen(int i);
+    double ETH_Eigen_maziero(int i);
 
     // Eigen
     Eigen::MatrixXd trace_Eigen(Eigen::MatrixXd A);
+    Eigen::MatrixXd trace_Eigen_maziero(Eigen::MatrixXd A);
     Eigen::MatrixXd thermalmat_Eigen();             // See if I change this a bit.
     Eigen::MatrixXd eigenstatemat_Eigen(int i);
 
     // Armadillo
     arma::mat trace_arma(arma::mat A);
+    arma::mat trace_arma_maziero(arma::mat A);
     arma::mat thermalmat_arma();                    // See if I change this a bit.
     arma::mat eigenstatemat_arma(int i);
 };
