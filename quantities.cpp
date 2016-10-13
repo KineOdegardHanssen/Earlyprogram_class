@@ -45,6 +45,26 @@ void Quantities::sort_energies()
     // Must do something about these
 }
 
+arma::mat Quantities::initialize_matrix_arma(int size)
+{
+    arma::mat matrix(size, size);
+    for(int i=0; i<size; i++)
+    {
+        for(int j=0; j<size; j++)    matrix(i,j) = 0.0;
+    }
+    return matrix;
+}
+
+Eigen::MatrixXd Quantities::initialize_matrix_Eigen(int size)
+{
+    Eigen::MatrixXd matrix(size, size);
+    for(int i=0; i<size; i++)
+    {
+        for(int j=0; j<size; j++)    matrix(i,j) = 0.0;
+    }
+    return matrix;
+}
+
 int Quantities::signcompare(double fa, double fc)
 {
     if( (fa>0.0 && fc<0.0) || (fa<0.0 && fc>0.0) )        return    1;
@@ -234,8 +254,16 @@ double Quantities::self_consistency_beta_derivative_a(double eigenvalue, double 
 
 double Quantities::ETH(int i)
 {
-    if(armadillobool)    ETH_arma(i);
-    else                 ETH_Eigen(i);
+    if(system.sectorbool)
+    {
+        if(armadillobool)    ETH_arma_sector(i);
+        else                 ETH_Eigen_sector(i);
+    }
+    else
+    {
+        if(armadillobool)    ETH_arma(i);
+        else                 ETH_Eigen(i);
+    }
 }
 
 // So these are only suitable for the total system (yet). Should generalize them
@@ -274,6 +302,30 @@ double Quantities::ETH_arma(int i)         // Or should I return a list of doubl
     return diff_elem;
 }
 
+double Quantities::ETH_arma_sector(int i)
+{
+    //newtonsmethod_arma(eigvals_a(i));   // Or should I call the bisection method? // newtonsmethod works, but is incredibly slow...
+    //cout << "newtonsmethod_arma run" << endl;
+    beta = 0; // Incorrect, but want to focus on removing any errors for now.
+    arma::mat thm = thermalmat_arma();
+    arma::mat esm = eigenstatemat_arma(i);
+
+    cout << "The density matrix is:" << endl;
+    cout << esm << endl << endl;
+    cout << "The thermal matrix is: " << endl;
+    cout << thm << endl << endl;
+
+    thm = trace_arma_sector(thm);
+    esm = trace_arma_sector(esm);
+
+    cout << "Reduced thermal matrix: " << endl;
+    cout << thm << endl << endl;
+    cout << "Reduced density matrix: " << endl;
+    cout << esm << endl << endl;
+
+    return thm(0,0) - esm(0,0); // If it is indeed this quantity we want...
+}
+
 double Quantities::ETH_arma_maziero(int i)         // Or should I return a list of doubles, so I have more flexibility regarding which quantity to use
 {
     int j = 0;
@@ -286,9 +338,6 @@ double Quantities::ETH_arma_maziero(int i)         // Or should I return a list 
     cout << esm << endl << endl;
     cout << "The thermal matrix is: " << endl;
     cout << thm << endl << endl;
-
-    // Trace procedures: Should we trace over all spins except our state?
-    //int Nnext = N;
     while(j<(systemsize-1)) // Want to trace over all particles except one
     {
         thm = trace_arma_maziero(thm);  // Should I declare it again, or just let it stand like this?
@@ -328,6 +377,30 @@ double Quantities::ETH_Eigen(int i)
     //double diff_norm_frob = Eigen::MatrixBase<Eigen::MatrixXd>::norm(diff_mat);   // The Frobenius norm
 
     return diff_elem;
+}
+
+double Quantities::ETH_Eigen_sector(int i)
+{
+    //newtonsmethod_arma(eigvals_a(i));   // Or should I call the bisection method? // newtonsmethod works, but is incredibly slow...
+    //cout << "newtonsmethod_arma run" << endl;
+    beta = 0; // Incorrect, but want to focus on removing any errors for now.
+    Eigen::MatrixXd thm = thermalmat_Eigen();  // Wait... do these work for sparse? ... Probably. N=numberofstatesor numberofhits, depending on sectorbool.
+    Eigen::MatrixXd esm = eigenstatemat_Eigen(i);
+
+    cout << "The density matrix is:" << endl;
+    cout << esm << endl << endl;
+    cout << "The thermal matrix is: " << endl;
+    cout << thm << endl << endl;
+
+    thm = trace_Eigen_sector(thm);
+    esm = trace_Eigen_sector(esm);
+
+    cout << "Reduced thermal matrix: " << endl;
+    cout << thm << endl << endl;
+    cout << "Reduced density matrix: " << endl;
+    cout << esm << endl << endl;
+
+    return thm(0,0) - esm(0,0); // If it is indeed this quantity we want...
 }
 
 double Quantities::ETH_Eigen_maziero(int i)
@@ -391,6 +464,14 @@ Eigen::MatrixXd Quantities::trace_Eigen(Eigen::MatrixXd A)  // Should I just do 
     return trace_matrix;
 }
 
+Eigen::MatrixXd Quantities::trace_Eigen_sector(Eigen::MatrixXd A)
+{   // Verify somehow that this is correct.
+    Eigen::MatrixXd trace_matrix = initialize_matrix_Eigen(2);  // initialize_matrix_arma(int size)
+    int first_limit = floor(N/2);
+    for(int i=0; i<first_limit; i++)            trace_matrix(0,0) += A(i,i);
+    for(int i=(first_limit+1); i<N; i++)        trace_matrix(1,1) += A(i,i);
+    return trace_matrix;
+}
 
 
 Eigen::MatrixXd Quantities::thermalmat_Eigen()
@@ -465,6 +546,15 @@ arma::mat Quantities::trace_arma_maziero(arma::mat A)
         }
     }
     cout << "I'm done setting the trace according to Maziero" << endl;
+    return trace_matrix;
+}
+
+arma::mat Quantities::trace_arma_sector(arma::mat A)
+{   // Verify somehow that this is correct.
+    arma::mat trace_matrix = initialize_matrix_arma(2);  // initialize_matrix_arma(int size)
+    int first_limit = floor(N/2);
+    for(int i=0; i<first_limit; i++)            trace_matrix(0,0) += A(i,i);
+    for(int i=(first_limit+1); i<N; i++)        trace_matrix(1,1) += A(i,i);
     return trace_matrix;
 }
 
